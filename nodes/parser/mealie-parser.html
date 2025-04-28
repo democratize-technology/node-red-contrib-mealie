@@ -1,0 +1,133 @@
+<!--
+  Parser domain node for Mealie API
+  Handles multiple parser operations in a single configurable node
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-parser', {
+        category: 'Mealie',
+        color: '#e58325',
+        defaults: {
+            name: { value: "" },
+            server: { value: "", type: "mealie-server-config", required: true },
+            operation: { value: "parseUrl", required: true },
+            url: { value: "" },
+            ingredientText: { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "mealie.svg",
+        label: function () {
+            return this.name || "Mealie Parser";
+        },
+        paletteLabel: "Parser",
+        oneditprepare: function () {
+            // Get jQuery references to UI elements
+            const $operation = $("#node-input-operation");
+            const $urlRow = $(".form-row.url");
+            const $ingredientTextRow = $(".form-row.ingredient-text");
+
+            // Function to show/hide fields based on operation
+            function updateFields() {
+                const operation = $operation.val();
+
+                // Hide all operation-specific fields first
+                $urlRow.hide();
+                $ingredientTextRow.hide();
+
+                // Show relevant fields based on operation
+                switch (operation) {
+                    case 'parseUrl':
+                        $urlRow.show();
+                        break;
+                    case 'parseText':
+                        $ingredientTextRow.show();
+                        break;
+                }
+            }
+
+            // Initialize field visibility
+            updateFields();
+
+            // Update fields when operation changes
+            $operation.on("change", updateFields);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-parser">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="Select server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="parseUrl">Parse URL</option>
+            <option value="parseText">Parse Ingredient Text</option>
+        </select>
+    </div>
+    <div class="form-row url">
+        <label for="node-input-url"><i class="fa fa-link"></i> URL</label>
+        <input type="text" id="node-input-url" placeholder="URL to parse">
+    </div>
+    <div class="form-row ingredient-text">
+        <label for="node-input-ingredientText"><i class="fa fa-align-left"></i> Ingredient Text</label>
+        <input type="text" id="node-input-ingredientText" placeholder="Ingredient text to parse">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-parser">
+    <p>A consolidated node for parsing operations in Mealie</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Server <span class="property-type">config</span></dt>
+        <dd>The Mealie server connection to use</dd>
+        <dt>Operation <span class="property-type">string</span></dt>
+        <dd>The operation to perform (can be overridden via msg.payload.operation)</dd>
+        <dt>URL <span class="property-type">string</span></dt>
+        <dd>The URL to parse for parseUrl operation (can be overridden via msg.payload.url)</dd>
+        <dt>Ingredient Text <span class="property-type">string</span></dt>
+        <dd>The ingredient text to parse for parseText operation (can be overridden via msg.payload.ingredientText)</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>Optional - The operation to perform (overrides node configuration)</dd>
+    </dl>
+
+    <h4>Operation: parseUrl</h4>
+    <dl class="message-properties">
+        <dt>payload.url <span class="property-type">string</span></dt>
+        <dd>The URL to parse</dd>
+    </dl>
+
+    <h4>Operation: parseText</h4>
+    <dl class="message-properties">
+        <dt>payload.ingredientText <span class="property-type">string</span></dt>
+        <dd>The ingredient text to parse</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Indicates success (true) or failure (false)</dd>
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>The operation that was performed</dd>
+        <dt>payload.data <span class="property-type">object</span></dt>
+        <dd>For successful operations: the operation result data</dd>
+        <dt>payload.error <span class="property-type">object</span></dt>
+        <dd>For failed operations: error details with message, code, and any additional information</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node provides parsing operations for Mealie. The parseUrl operation extracts recipe data from a URL. The parseText operation parses ingredient text into structured data.</p>
+    <p>For the parseUrl operation, provide a URL to a recipe. For the parseText operation, provide ingredient text to parse.</p>
+    <p>On success, the payload will contain a success flag set to true and the operation result in the data property. On failure, the payload will contain a success flag set to false and error details in the error property.</p>
+</script>

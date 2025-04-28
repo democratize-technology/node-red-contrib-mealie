@@ -1,0 +1,59 @@
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-server-config', {
+        category: 'config',
+        defaults: {
+            name: { value: '' },
+            url: { value: '', required: true, validate: RED.validators.regex(/^https?:\/\//) },
+            timeout: { value: 5000, validate: RED.validators.number() }
+        },
+        credentials: {
+            apiToken: { type: 'password' }
+        },
+        label: function() {
+            return this.name || 'Mealie Server';
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-server-config">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-url"><i class="fa fa-globe"></i> URL</label>
+        <input type="text" id="node-config-input-url" placeholder="https://mealie.yourdomain.com">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-apiToken"><i class="fa fa-key"></i> API Token</label>
+        <input type="password" id="node-config-input-apiToken">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-timeout"><i class="fa fa-clock-o"></i> Timeout</label>
+        <input type="number" id="node-config-input-timeout" placeholder="5000" style="width:100px"> ms
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-server-config">
+    <p>Configuration node for connecting to a Mealie server instance.</p>
+    <h3>Properties</h3>
+    <dl class="message-properties">
+        <dt>Name <span class="property-type">string</span></dt>
+        <dd>Name for this configuration (optional)</dd>
+        
+        <dt>URL <span class="property-type">string</span></dt>
+        <dd>The base URL of your Mealie instance (e.g., https://mealie.yourdomain.com)</dd>
+        
+        <dt>API Token <span class="property-type">credential</span></dt>
+        <dd>Authentication token for accessing the Mealie API</dd>
+        
+        <dt>Timeout <span class="property-type">number</span></dt>
+        <dd>Request timeout in milliseconds (default: 5000)</dd>
+    </dl>
+    
+    <h3>Details</h3>
+    <p>This configuration node stores the connection details for a Mealie server instance.
+    All Mealie nodes will reference this configuration to communicate with the server.</p>
+    
+    <p>The API token can be generated from within your Mealie instance's settings.</p>
+</script>

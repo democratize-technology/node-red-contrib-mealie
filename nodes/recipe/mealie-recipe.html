@@ -1,0 +1,193 @@
+<!--
+  Recipe domain node for Mealie API
+  Handles multiple recipe operations in a single configurable node
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-recipe', {
+        category: 'Mealie',
+        color: '#e58325',
+        defaults: {
+            name: { value: "" },
+            server: { value: "", type: "mealie-server-config", required: true },
+            operation: { value: "get", required: true },
+            slug: { value: "" },
+            recipeData: { value: "{}" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "mealie.svg",
+        label: function () {
+            return this.name || "Mealie Recipe";
+        },
+        paletteLabel: "Recipe",
+        oneditprepare: function () {
+            // Get jQuery references to UI elements
+            const $operation = $("#node-input-operation");
+            const $slugRow = $(".form-row.slug");
+            const $recipeDataRow = $(".form-row.recipe-data");
+
+            // Function to show/hide fields based on operation
+            function updateFields() {
+                const operation = $operation.val();
+
+                // Hide all operation-specific fields first
+                $slugRow.hide();
+                $recipeDataRow.hide();
+
+                // Show relevant fields based on operation
+                switch (operation) {
+                    case 'get':
+                    case 'delete':
+                        $slugRow.show();
+                        break;
+                    case 'search':
+                        // No additional fields needed
+                        break;
+                    case 'create':
+                        $recipeDataRow.show();
+                        break;
+                    case 'update':
+                        $slugRow.show();
+                        $recipeDataRow.show();
+                        break;
+                    case 'image':
+                    case 'asset':
+                        $slugRow.show();
+                        break;
+                }
+            }
+
+            // Initialize field visibility
+            updateFields();
+
+            // Update fields when operation changes
+            $operation.on("change", updateFields);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-recipe">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="Select server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="get">Get Recipe</option>
+            <option value="search">Search Recipes</option>
+            <option value="create">Create Recipe</option>
+            <option value="update">Update Recipe</option>
+            <option value="delete">Delete Recipe</option>
+            <option value="image">Manage Image</option>
+            <option value="asset">Manage Assets</option>
+        </select>
+    </div>
+    <div class="form-row slug">
+        <label for="node-input-slug"><i class="fa fa-bookmark"></i> Slug</label>
+        <input type="text" id="node-input-slug" placeholder="Recipe slug (optional)">
+    </div>
+    <div class="form-row recipe-data">
+        <label for="node-input-recipeData"><i class="fa fa-file-code-o"></i> Recipe Data</label>
+        <input type="text" id="node-input-recipeData" placeholder="Recipe JSON data (optional)">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-recipe">
+    <p>A consolidated node for performing various operations on Mealie recipes</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Server <span class="property-type">config</span></dt>
+        <dd>The Mealie server connection to use</dd>
+        <dt>Operation <span class="property-type">string</span></dt>
+        <dd>The operation to perform (can be overridden via msg.payload.operation)</dd>
+        <dt>Slug <span class="property-type">string</span></dt>
+        <dd>The recipe slug for operations that require it (can be overridden via msg.payload.slug)</dd>
+        <dt>Recipe Data <span class="property-type">json</span></dt>
+        <dd>The recipe data for create/update operations (can be overridden via msg.payload.recipeData)</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>Optional - The operation to perform (overrides node configuration)</dd>
+    </dl>
+
+    <h4>Operation: get</h4>
+    <dl class="message-properties">
+        <dt>payload.slug <span class="property-type">string</span></dt>
+        <dd>The recipe slug to retrieve</dd>
+    </dl>
+
+    <h4>Operation: search</h4>
+    <dl class="message-properties">
+        <dt>payload.params <span class="property-type">object</span></dt>
+        <dd>Search query parameters (or direct in payload)</dd>
+    </dl>
+
+    <h4>Operation: create</h4>
+    <dl class="message-properties">
+        <dt>payload.recipeData <span class="property-type">object</span></dt>
+        <dd>The recipe data to create</dd>
+    </dl>
+
+    <h4>Operation: update</h4>
+    <dl class="message-properties">
+        <dt>payload.slug <span class="property-type">string</span></dt>
+        <dd>The recipe slug to update</dd>
+        <dt>payload.recipeData <span class="property-type">object</span></dt>
+        <dd>The updated recipe data</dd>
+    </dl>
+
+    <h4>Operation: delete</h4>
+    <dl class="message-properties">
+        <dt>payload.slug <span class="property-type">string</span></dt>
+        <dd>The recipe slug to delete</dd>
+    </dl>
+
+    <h4>Operation: image</h4>
+    <dl class="message-properties">
+        <dt>payload.slug <span class="property-type">string</span></dt>
+        <dd>The recipe slug</dd>
+        <dt>payload.imageAction <span class="property-type">string</span></dt>
+        <dd>The image action to perform: 'get' or 'upload' (default: 'get')</dd>
+        <dt>payload.imageData <span class="property-type">object</span></dt>
+        <dd>Required for 'upload' action: the image data to upload</dd>
+    </dl>
+
+    <h4>Operation: asset</h4>
+    <dl class="message-properties">
+        <dt>payload.slug <span class="property-type">string</span></dt>
+        <dd>The recipe slug</dd>
+        <dt>payload.assetAction <span class="property-type">string</span></dt>
+        <dd>The asset action to perform: 'list', 'get', 'upload', 'delete' (default: 'list')</dd>
+        <dt>payload.assetId <span class="property-type">string</span></dt>
+        <dd>Required for 'get' and 'delete' actions: the asset ID</dd>
+        <dt>payload.assetData <span class="property-type">object</span></dt>
+        <dd>Required for 'upload' action: the asset data to upload</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Indicates success (true) or failure (false)</dd>
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>The operation that was performed</dd>
+        <dt>payload.data <span class="property-type">object</span></dt>
+        <dd>For successful operations: the operation result data</dd>
+        <dt>payload.error <span class="property-type">object</span></dt>
+        <dd>For failed operations: error details with message, code, and any additional information</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node consolidates multiple recipe operations in a single configurable node. You can either configure the operation in the node settings or override it dynamically via the input message.</p>
+    <p>Each operation has its own set of required parameters that can be provided either in the node configuration or in the input message.</p>
+    <p>For configuration-based usage, select the operation in the node settings and configure the relevant parameters. For dynamic usage, provide the operation and parameters in the input message.</p>
+    <p>On success, the payload will contain a success flag set to true and the operation result in the data property. On failure, the payload will contain a success flag set to false and error details in the error property.</p>
+</script>

@@ -1,0 +1,145 @@
+<!--
+  Bulk domain node for Mealie API
+  Handles multiple bulk operations in a single configurable node
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-bulk', {
+        category: 'Mealie',
+        color: '#e58325',
+        defaults: {
+            name: { value: "" },
+            server: { value: "", type: "mealie-server-config", required: true },
+            operation: { value: "exportRecipes", required: true },
+            recipeIds: { value: "[]" },
+            urls: { value: "[]" },
+            importData: { value: "{}" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "mealie.svg",
+        label: function () {
+            return this.name || "Mealie Bulk";
+        },
+        paletteLabel: "Bulk",
+        oneditprepare: function () {
+            // Get jQuery references to UI elements
+            const $operation = $("#node-input-operation");
+            const $recipeIdsRow = $(".form-row.recipe-ids");
+            const $urlsRow = $(".form-row.urls");
+            const $importDataRow = $(".form-row.import-data");
+
+            // Function to show/hide fields based on operation
+            function updateFields() {
+                const operation = $operation.val();
+
+                // Hide all operation-specific fields first
+                $recipeIdsRow.hide();
+                $urlsRow.hide();
+                $importDataRow.hide();
+
+                // Show relevant fields based on operation
+                switch (operation) {
+                    case 'exportRecipes':
+                        $recipeIdsRow.show();
+                        break;
+                    case 'importRecipes':
+                        $urlsRow.show();
+                        $importDataRow.show();
+                        break;
+                }
+            }
+
+            // Initialize field visibility
+            updateFields();
+
+            // Update fields when operation changes
+            $operation.on("change", updateFields);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-bulk">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="Select server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="exportRecipes">Export Recipes</option>
+            <option value="importRecipes">Import Recipes</option>
+        </select>
+    </div>
+    <div class="form-row recipe-ids">
+        <label for="node-input-recipeIds"><i class="fa fa-list"></i> Recipe IDs</label>
+        <input type="text" id="node-input-recipeIds" placeholder="Array of recipe IDs as JSON (e.g., [&quot;1&quot;, &quot;2&quot;])">
+    </div>
+    <div class="form-row urls">
+        <label for="node-input-urls"><i class="fa fa-link"></i> URLs</label>
+        <input type="text" id="node-input-urls" placeholder="Array of URLs as JSON (e.g., [&quot;https://example.com/recipe&quot;])">
+    </div>
+    <div class="form-row import-data">
+        <label for="node-input-importData"><i class="fa fa-file-code-o"></i> Import Data</label>
+        <input type="text" id="node-input-importData" placeholder="Import data JSON (alternative to URLs)">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-bulk">
+    <p>A consolidated node for performing bulk operations on recipes in Mealie</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Server <span class="property-type">config</span></dt>
+        <dd>The Mealie server connection to use</dd>
+        <dt>Operation <span class="property-type">string</span></dt>
+        <dd>The operation to perform (can be overridden via msg.payload.operation)</dd>
+        <dt>Recipe IDs <span class="property-type">json</span></dt>
+        <dd>Array of recipe IDs for exportRecipes operation (can be overridden via msg.payload.recipeIds)</dd>
+        <dt>URLs <span class="property-type">json</span></dt>
+        <dd>Array of URLs for importRecipes operation (can be overridden via msg.payload.urls)</dd>
+        <dt>Import Data <span class="property-type">json</span></dt>
+        <dd>Import data for importRecipes operation (alternative to URLs, can be overridden via msg.payload.importData)</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>Optional - The operation to perform (overrides node configuration)</dd>
+    </dl>
+
+    <h4>Operation: exportRecipes</h4>
+    <dl class="message-properties">
+        <dt>payload.recipeIds <span class="property-type">array</span></dt>
+        <dd>Array of recipe IDs to export</dd>
+    </dl>
+
+    <h4>Operation: importRecipes</h4>
+    <dl class="message-properties">
+        <dt>payload.urls <span class="property-type">array</span></dt>
+        <dd>Optional - Array of URLs to import recipes from</dd>
+        <dt>payload.importData <span class="property-type">object</span></dt>
+        <dd>Optional - Import data object (alternative to URLs)</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Indicates success (true) or failure (false)</dd>
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>The operation that was performed</dd>
+        <dt>payload.data <span class="property-type">object</span></dt>
+        <dd>For successful operations: the operation result data</dd>
+        <dt>payload.error <span class="property-type">object</span></dt>
+        <dd>For failed operations: error details with message, code, and any additional information</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node provides bulk operations for recipes in Mealie. The exportRecipes operation exports multiple recipes by their IDs. The importRecipes operation imports recipes from URLs or import data.</p>
+    <p>For the exportRecipes operation, provide an array of recipe IDs to export. For the importRecipes operation, provide either an array of URLs or an import data object.</p>
+    <p>On success, the payload will contain a success flag set to true and the operation result in the data property. On failure, the payload will contain a success flag set to false and error details in the error property.</p>
+</script>

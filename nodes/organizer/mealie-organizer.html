@@ -1,0 +1,172 @@
+<!--
+  Organizer domain node for Mealie API
+  Handles multiple organizer operations in a single configurable node
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-organizer', {
+        category: 'Mealie',
+        color: '#e58325',
+        defaults: {
+            name: { value: "" },
+            server: { value: "", type: "mealie-server-config", required: true },
+            operation: { value: "getCategories", required: true },
+            categoryId: { value: "" },
+            tagId: { value: "" },
+            cookbookId: { value: "" },
+            cookbookData: { value: "{}" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "mealie.svg",
+        label: function () {
+            return this.name || "Mealie Organizer";
+        },
+        paletteLabel: "Organizer",
+        oneditprepare: function () {
+            // Get jQuery references to UI elements
+            const $operation = $("#node-input-operation");
+            const $categoryIdRow = $(".form-row.category-id");
+            const $tagIdRow = $(".form-row.tag-id");
+            const $cookbookIdRow = $(".form-row.cookbook-id");
+            const $cookbookDataRow = $(".form-row.cookbook-data");
+
+            // Function to show/hide fields based on operation
+            function updateFields() {
+                const operation = $operation.val();
+
+                // Hide all operation-specific fields first
+                $categoryIdRow.hide();
+                $tagIdRow.hide();
+                $cookbookIdRow.hide();
+                $cookbookDataRow.hide();
+
+                // Show relevant fields based on operation
+                switch (operation) {
+                    case 'getCategories':
+                        $categoryIdRow.show();
+                        break;
+                    case 'getTags':
+                        $tagIdRow.show();
+                        break;
+                    case 'getCookbooks':
+                        $cookbookIdRow.show();
+                        break;
+                    case 'createCookbook':
+                        $cookbookDataRow.show();
+                        break;
+                }
+            }
+
+            // Initialize field visibility
+            updateFields();
+
+            // Update fields when operation changes
+            $operation.on("change", updateFields);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-organizer">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="Select server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="getCategories">Get Categories</option>
+            <option value="getTags">Get Tags</option>
+            <option value="getCookbooks">Get Cookbooks</option>
+            <option value="createCookbook">Create Cookbook</option>
+        </select>
+    </div>
+    <div class="form-row category-id">
+        <label for="node-input-categoryId"><i class="fa fa-sitemap"></i> Category ID</label>
+        <input type="text" id="node-input-categoryId" placeholder="Category ID (optional)">
+    </div>
+    <div class="form-row tag-id">
+        <label for="node-input-tagId"><i class="fa fa-tag"></i> Tag ID</label>
+        <input type="text" id="node-input-tagId" placeholder="Tag ID (optional)">
+    </div>
+    <div class="form-row cookbook-id">
+        <label for="node-input-cookbookId"><i class="fa fa-book"></i> Cookbook ID</label>
+        <input type="text" id="node-input-cookbookId" placeholder="Cookbook ID (optional)">
+    </div>
+    <div class="form-row cookbook-data">
+        <label for="node-input-cookbookData"><i class="fa fa-file-code-o"></i> Cookbook Data</label>
+        <input type="text" id="node-input-cookbookData" placeholder="Cookbook JSON data">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-organizer">
+    <p>A consolidated node for performing various organizer operations in Mealie</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Server <span class="property-type">config</span></dt>
+        <dd>The Mealie server connection to use</dd>
+        <dt>Operation <span class="property-type">string</span></dt>
+        <dd>The operation to perform (can be overridden via msg.payload.operation)</dd>
+        <dt>Category ID <span class="property-type">string</span></dt>
+        <dd>The category ID for category operations (can be overridden via msg.payload.categoryId)</dd>
+        <dt>Tag ID <span class="property-type">string</span></dt>
+        <dd>The tag ID for tag operations (can be overridden via msg.payload.tagId)</dd>
+        <dt>Cookbook ID <span class="property-type">string</span></dt>
+        <dd>The cookbook ID for cookbook operations (can be overridden via msg.payload.cookbookId)</dd>
+        <dt>Cookbook Data <span class="property-type">json</span></dt>
+        <dd>The cookbook data for createCookbook operation (can be overridden via msg.payload.cookbookData)</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>Optional - The operation to perform (overrides node configuration)</dd>
+    </dl>
+
+    <h4>Operation: getCategories</h4>
+    <dl class="message-properties">
+        <dt>payload.categoryId <span class="property-type">string</span></dt>
+        <dd>Optional - The category ID to retrieve. If not provided, all categories are retrieved.</dd>
+    </dl>
+
+    <h4>Operation: getTags</h4>
+    <dl class="message-properties">
+        <dt>payload.tagId <span class="property-type">string</span></dt>
+        <dd>Optional - The tag ID to retrieve. If not provided, all tags are retrieved.</dd>
+    </dl>
+
+    <h4>Operation: getCookbooks</h4>
+    <dl class="message-properties">
+        <dt>payload.cookbookId <span class="property-type">string</span></dt>
+        <dd>Optional - The cookbook ID to retrieve. If not provided, all cookbooks are retrieved.</dd>
+    </dl>
+
+    <h4>Operation: createCookbook</h4>
+    <dl class="message-properties">
+        <dt>payload.cookbookData <span class="property-type">object</span></dt>
+        <dd>The cookbook data to create</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Indicates success (true) or failure (false)</dd>
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>The operation that was performed</dd>
+        <dt>payload.data <span class="property-type">object</span></dt>
+        <dd>For successful operations: the operation result data</dd>
+        <dt>payload.error <span class="property-type">object</span></dt>
+        <dd>For failed operations: error details with message, code, and any additional information</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node consolidates multiple recipe organization operations in a single configurable node. You can either configure the operation in the node settings or override it dynamically via the input message.</p>
+    <p>Each operation has its own set of required parameters that can be provided either in the node configuration or in the input message.</p>
+    <p>For configuration-based usage, select the operation in the node settings and configure the relevant parameters. For dynamic usage, provide the operation and parameters in the input message.</p>
+    <p>On success, the payload will contain a success flag set to true and the operation result in the data property. On failure, the payload will contain a success flag set to false and error details in the error property.</p>
+</script>

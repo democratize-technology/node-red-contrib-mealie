@@ -1,0 +1,602 @@
+[
+  {
+    "id": "mealplan-organizer-flow",
+    "type": "tab",
+    "label": "Meal Planning & Organization",
+    "disabled": false,
+    "info": "# Mealie Meal Planning & Organization Operations\n\nThis flow demonstrates common operations with the Mealie meal planning and organizer domain nodes.\n\nIt showcases:\n- Meal plan management (get, create, update, delete)\n- Organizer operations (categories, tags, cookbooks)\n- Combined workflow examples\n\nThe examples use both statically configured operations and dynamic operation specification via msg.payload.operation."
+  },
+  {
+    "id": "mealplan-header",
+    "type": "comment",
+    "z": "mealplan-organizer-flow",
+    "name": "Meal Planning Operations",
+    "info": "",
+    "x": 180,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "server-config",
+    "type": "mealie-server-config",
+    "name": "My Mealie Server",
+    "baseUrl": "http://localhost:9000",
+    "apiKey": "",
+    "credentials": {
+      "username": "admin",
+      "password": "secret"
+    },
+    "x": 600,
+    "y": 40
+  },
+  {
+    "id": "mealplan-get-all-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Get All Meal Plans",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 80,
+    "wires": [["mealplan-node"]]
+  },
+  {
+    "id": "mealplan-node",
+    "type": "mealie-planning",
+    "z": "mealplan-organizer-flow",
+    "name": "Meal Planning",
+    "server": "server-config",
+    "operation": "get",
+    "x": 370,
+    "y": 120,
+    "wires": [["mealplan-debug"]]
+  },
+  {
+    "id": "mealplan-debug",
+    "type": "debug",
+    "z": "mealplan-organizer-flow",
+    "name": "Meal Plan Data",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "mealplan-get-specific-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Get Specific Plan",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"get\",\"mealPlanId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 120,
+    "wires": [["mealplan-node"]]
+  },
+  {
+    "id": "mealplan-create-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Create Meal Plan",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"create\",\"planData\":{\"groupId\":\"123e4567-e89b-12d3-a456-426614174000\",\"startDate\":\"2025-05-01\",\"endDate\":\"2025-05-07\",\"mealData\":[{\"date\":\"2025-05-01\",\"slug\":\"pizza-dough\",\"title\":\"Pizza Night\",\"description\":\"Family pizza night\",\"mealType\":\"dinner\"}]}}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 160,
+    "wires": [["mealplan-node"]]
+  },
+  {
+    "id": "mealplan-update-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Update Meal Plan",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"update\",\"mealPlanId\":\"123e4567-e89b-12d3-a456-426614174000\",\"planData\":{\"mealData\":[{\"date\":\"2025-05-01\",\"slug\":\"pizza-dough\",\"title\":\"Pizza Night\",\"description\":\"Family pizza night with homemade dough\",\"mealType\":\"dinner\"},{\"date\":\"2025-05-02\",\"slug\":\"simple-pasta\",\"title\":\"Pasta Night\",\"description\":\"Simple pasta dinner\",\"mealType\":\"dinner\"}]}}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 200,
+    "wires": [["mealplan-node"]]
+  },
+  {
+    "id": "mealplan-delete-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Delete Meal Plan",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"delete\",\"mealPlanId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 240,
+    "wires": [["mealplan-node"]]
+  },
+  {
+    "id": "organizer-header",
+    "type": "comment",
+    "z": "mealplan-organizer-flow",
+    "name": "Organizer Operations",
+    "info": "",
+    "x": 170,
+    "y": 300,
+    "wires": []
+  },
+  {
+    "id": "category-get-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Get Categories",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 340,
+    "wires": [["category-node"]]
+  },
+  {
+    "id": "category-node",
+    "type": "mealie-organizer",
+    "z": "mealplan-organizer-flow",
+    "name": "Recipe Categories",
+    "server": "server-config",
+    "operation": "category-get",
+    "x": 380,
+    "y": 340,
+    "wires": [["category-debug"]]
+  },
+  {
+    "id": "category-debug",
+    "type": "debug",
+    "z": "mealplan-organizer-flow",
+    "name": "Category Data",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 340,
+    "wires": []
+  },
+  {
+    "id": "category-specific-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Get Specific Category",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"categoryId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 380,
+    "wires": [["category-node"]]
+  },
+  {
+    "id": "tag-get-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Get Tags",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"tag-get\"}",
+    "payloadType": "json",
+    "x": 150,
+    "y": 440,
+    "wires": [["tag-node"]]
+  },
+  {
+    "id": "tag-node",
+    "type": "mealie-organizer",
+    "z": "mealplan-organizer-flow",
+    "name": "Recipe Tags",
+    "server": "server-config",
+    "operation": "tag-get",
+    "x": 360,
+    "y": 440,
+    "wires": [["tag-debug"]]
+  },
+  {
+    "id": "tag-debug",
+    "type": "debug",
+    "z": "mealplan-organizer-flow",
+    "name": "Tag Data",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 550,
+    "y": 440,
+    "wires": []
+  },
+  {
+    "id": "tag-specific-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Get Specific Tag",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"tag-get\",\"tagId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 480,
+    "wires": [["tag-node"]]
+  },
+  {
+    "id": "cookbook-get-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Get Cookbooks",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"cookbook-get\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 540,
+    "wires": [["cookbook-node"]]
+  },
+  {
+    "id": "cookbook-node",
+    "type": "mealie-organizer",
+    "z": "mealplan-organizer-flow",
+    "name": "Cookbooks",
+    "server": "server-config",
+    "operation": "cookbook-get",
+    "x": 360,
+    "y": 540,
+    "wires": [["cookbook-debug"]]
+  },
+  {
+    "id": "cookbook-debug",
+    "type": "debug",
+    "z": "mealplan-organizer-flow",
+    "name": "Cookbook Data",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 540,
+    "wires": []
+  },
+  {
+    "id": "cookbook-create-inject",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Create Cookbook",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"cookbook-create\",\"cookbookData\":{\"name\":\"Family Favorites\",\"description\":\"Collection of our favorite family recipes\",\"slug\":\"family-favorites\"}}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 580,
+    "wires": [["cookbook-node"]]
+  },
+  {
+    "id": "weekly-plan-workflow-header",
+    "type": "comment",
+    "z": "mealplan-organizer-flow",
+    "name": "Weekly Meal Plan Workflow",
+    "info": "",
+    "x": 190,
+    "y": 640,
+    "wires": []
+  },
+  {
+    "id": "weekly-plan-start",
+    "type": "inject",
+    "z": "mealplan-organizer-flow",
+    "name": "Start Weekly Plan",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"createWeeklyPlan\":true}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 680,
+    "wires": [["search-recipes"]]
+  },
+  {
+    "id": "search-recipes",
+    "type": "function",
+    "z": "mealplan-organizer-flow",
+    "name": "Prepare Recipe Search",
+    "func": "// Set up recipe search operation\nmsg.payload = {\n    operation: 'search',\n    params: {\n        perPage: 5,\n        orderBy: 'name',\n        orderDirection: 'asc'\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 680,
+    "wires": [["recipe-search-node"]]
+  },
+  {
+    "id": "recipe-search-node",
+    "type": "mealie-recipe",
+    "z": "mealplan-organizer-flow",
+    "name": "Search Recipes",
+    "server": "server-config",
+    "operation": "search",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 570,
+    "y": 680,
+    "wires": [["prepare-weekly-plan"]]
+  },
+  {
+    "id": "prepare-weekly-plan",
+    "type": "function",
+    "z": "mealplan-organizer-flow",
+    "name": "Prepare Weekly Plan Data",
+    "func": "// Get recipe data from search results\nconst recipes = msg.payload.data.items || [];\n\n// Format dates for the upcoming week\nconst today = new Date();\nconst startDate = new Date(today);\nstartDate.setDate(today.getDate() - today.getDay() + 1); // Next Monday\n\nconst endDate = new Date(startDate);\nendDate.setDate(startDate.getDate() + 6); // Sunday\n\n// Format dates as YYYY-MM-DD\nconst formatDate = (date) => {\n    return date.toISOString().split('T')[0];\n};\n\n// Create mealData array with available recipes\nconst mealData = [];\nfor (let i = 0; i < 7 && i < recipes.length; i++) {\n    const mealDate = new Date(startDate);\n    mealDate.setDate(startDate.getDate() + i);\n    \n    mealData.push({\n        date: formatDate(mealDate),\n        slug: recipes[i].slug,\n        title: recipes[i].name,\n        description: `${recipes[i].name} for dinner`,\n        mealType: 'dinner'\n    });\n}\n\n// Prepare meal plan creation payload\nmsg.payload = {\n    operation: 'create',\n    planData: {\n        groupId: 'home',  // Replace with your actual group ID\n        startDate: formatDate(startDate),\n        endDate: formatDate(endDate),\n        mealData: mealData\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 390,
+    "y": 740,
+    "wires": [["create-weekly-plan"]]
+  },
+  {
+    "id": "create-weekly-plan",
+    "type": "mealie-planning",
+    "z": "mealplan-organizer-flow",
+    "name": "Create Weekly Plan",
+    "server": "server-config",
+    "operation": "create",
+    "x": 580,
+    "y": 740,
+    "wires": [["store-plan-id"]]
+  },
+  {
+    "id": "store-plan-id",
+    "type": "function",
+    "z": "mealplan-organizer-flow",
+    "name": "Store Plan ID & Create Shopping List",
+    "func": "// Extract meal plan ID\nconst mealPlanId = msg.payload.data.id;\n\n// Store for later use\nflow.set('mealPlanId', mealPlanId);\n\n// Create related shopping list\nmsg.payload = {\n    operation: 'list-create',\n    listData: {\n        name: `Shopping for ${msg.payload.data.startDate} to ${msg.payload.data.endDate}`,\n        groupId: msg.payload.data.groupId\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 400,
+    "y": 800,
+    "wires": [["create-shopping-list"]]
+  },
+  {
+    "id": "create-shopping-list",
+    "type": "mealie-shopping",
+    "z": "mealplan-organizer-flow",
+    "name": "Create Shopping List",
+    "server": "server-config",
+    "operation": "list-create",
+    "x": 580,
+    "y": 800,
+    "wires": [["prepare-recipe-add"]]
+  },
+  {
+    "id": "prepare-recipe-add",
+    "type": "function",
+    "z": "mealplan-organizer-flow",
+    "name": "Prepare Recipe Additions",
+    "func": "// Get the meal plan data\nconst meals = msg.payload.data.mealData || [];\nconst shoppingListId = msg.payload.data.id;\n\n// Store shopping list ID\nflow.set('shoppingListId', shoppingListId);\n\n// Prepare first recipe addition (if meals exist)\nif (meals.length > 0) {\n    msg.payload = {\n        operation: 'recipe-add',\n        shoppingListId: shoppingListId,\n        recipeData: {\n            recipeId: meals[0].slug,\n            recipeQuantity: 1\n        }\n    };\n    return msg;\n} else {\n    // Skip if no meals\n    msg.payload = {\n        success: false,\n        message: 'No meals in plan to add to shopping list'\n    };\n    return null;\n}",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 390,
+    "y": 860,
+    "wires": [["add-recipes-to-list"]]
+  },
+  {
+    "id": "add-recipes-to-list",
+    "type": "mealie-shopping",
+    "z": "mealplan-organizer-flow",
+    "name": "Add Recipes to List",
+    "server": "server-config",
+    "operation": "recipe-add",
+    "x": 580,
+    "y": 860,
+    "wires": [["weekly-workflow-output"]]
+  },
+  {
+    "id": "weekly-workflow-output",
+    "type": "function",
+    "z": "mealplan-organizer-flow",
+    "name": "Create Workflow Summary",
+    "func": "// Get stored IDs\nconst mealPlanId = flow.get('mealPlanId');\nconst shoppingListId = flow.get('shoppingListId');\n\n// Create workflow summary\nmsg.payload = {\n    success: true,\n    message: 'Weekly meal planning workflow completed',\n    data: {\n        mealPlanId: mealPlanId,\n        shoppingListId: shoppingListId,\n        mealPlanStartDate: msg.payload.data.startDate,\n        mealPlanEndDate: msg.payload.data.endDate,\n        recipesAdded: msg.payload.success ? 'yes' : 'no'\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 390,
+    "y": 920,
+    "wires": [["workflow-result"]]
+  },
+  {
+    "id": "workflow-result",
+    "type": "debug",
+    "z": "mealplan-organizer-flow",
+    "name": "Workflow Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 920,
+    "wires": []
+  }
+]

@@ -1,0 +1,722 @@
+[
+  {
+    "id": "admin-operations-flow",
+    "type": "tab",
+    "label": "Admin Operations",
+    "disabled": false,
+    "info": "# Mealie Admin Operations\n\nThis flow demonstrates common administrative operations with the Mealie admin domain node.\n\nIt showcases:\n- Server information and statistics\n- User management operations\n- Group and household management\n- Backup management\n- Server maintenance\n\nThe examples use both statically configured operations and dynamic operation specification via msg.payload.operation."
+  },
+  {
+    "id": "admin-header",
+    "type": "comment",
+    "z": "admin-operations-flow",
+    "name": "Admin Operations",
+    "info": "",
+    "x": 160,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "server-config",
+    "type": "mealie-server-config",
+    "name": "My Mealie Server",
+    "baseUrl": "http://localhost:9000",
+    "apiKey": "",
+    "credentials": {
+      "username": "admin",
+      "password": "secret"
+    },
+    "x": 600,
+    "y": 40
+  },
+  {
+    "id": "server-info-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get Server Info",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 80,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "admin-node",
+    "type": "mealie-admin",
+    "z": "admin-operations-flow",
+    "name": "Admin Operations",
+    "server": "server-config",
+    "operation": "info",
+    "x": 370,
+    "y": 80,
+    "wires": [["admin-debug"]]
+  },
+  {
+    "id": "admin-debug",
+    "type": "debug",
+    "z": "admin-operations-flow",
+    "name": "Admin Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 560,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "user-management-header",
+    "type": "comment",
+    "z": "admin-operations-flow",
+    "name": "User Management",
+    "info": "",
+    "x": 170,
+    "y": 140,
+    "wires": []
+  },
+  {
+    "id": "users-get-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get All Users",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"users\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 180,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "user-get-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get Specific User",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"users\",\"userId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 220,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "user-create-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Create User",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"users-create\",\"userData\":{\"username\":\"newuser\",\"fullName\":\"New User\",\"email\":\"newuser@example.com\",\"password\":\"SecurePassword123\",\"admin\":false}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 260,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "user-update-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Update User",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"users-update\",\"userId\":\"123e4567-e89b-12d3-a456-426614174000\",\"userData\":{\"fullName\":\"Updated Name\",\"admin\":true}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 300,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "user-delete-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Delete User",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"users-delete\",\"userId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 340,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "groups-header",
+    "type": "comment",
+    "z": "admin-operations-flow",
+    "name": "Group Management",
+    "info": "",
+    "x": 170,
+    "y": 400,
+    "wires": []
+  },
+  {
+    "id": "groups-get-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get All Groups",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"groups\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 440,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "group-get-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get Specific Group",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"groups\",\"groupId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 480,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "group-create-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Create Group",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"groups-create\",\"groupData\":{\"name\":\"New Group\",\"preferences\":{\"recipePublic\":false}}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 520,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "group-update-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Update Group",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"groups-update\",\"groupId\":\"123e4567-e89b-12d3-a456-426614174000\",\"groupData\":{\"name\":\"Updated Group\"}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 560,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "group-delete-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Delete Group",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"groups-delete\",\"groupId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 600,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "backup-header",
+    "type": "comment",
+    "z": "admin-operations-flow",
+    "name": "Backup Management",
+    "info": "",
+    "x": 170,
+    "y": 660,
+    "wires": []
+  },
+  {
+    "id": "backup-get-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "List Backups",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"backup\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 700,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "backup-create-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Create Backup",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"backup-create\",\"tag\":\"manual-backup\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 740,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "backup-restore-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Restore Backup",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"backup-restore\",\"fileName\":\"mealie-backup-2025-04-29.zip\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 780,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "backup-delete-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Delete Backup",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"backup-delete\",\"fileName\":\"mealie-backup-2025-04-28.zip\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 820,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "maintenance-header",
+    "type": "comment",
+    "z": "admin-operations-flow",
+    "name": "Maintenance Operations",
+    "info": "",
+    "x": 180,
+    "y": 880,
+    "wires": []
+  },
+  {
+    "id": "maintenance-logs-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get Logs",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"maintenance-logs\"}",
+    "payloadType": "json",
+    "x": 150,
+    "y": 920,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "maintenance-summary-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get Summary Stats",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"maintenance-summary\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 960,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "maintenance-storage-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Get Storage Stats",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"maintenance-storage\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 1000,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "maintenance-cleanup-inject",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Run Cleanup",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"maintenance-cleanup\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 1040,
+    "wires": [["admin-node"]]
+  },
+  {
+    "id": "admin-workflow-header",
+    "type": "comment",
+    "z": "admin-operations-flow",
+    "name": "Admin Workflow Example",
+    "info": "",
+    "x": 180,
+    "y": 1100,
+    "wires": []
+  },
+  {
+    "id": "admin-flow-start",
+    "type": "inject",
+    "z": "admin-operations-flow",
+    "name": "Start Admin Flow",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 1140,
+    "wires": [["server-check"]]
+  },
+  {
+    "id": "server-check",
+    "type": "mealie-admin",
+    "z": "admin-operations-flow",
+    "name": "Check Server Status",
+    "server": "server-config",
+    "operation": "info",
+    "x": 380,
+    "y": 1140,
+    "wires": [["check-server-status"]]
+  },
+  {
+    "id": "check-server-status",
+    "type": "function",
+    "z": "admin-operations-flow",
+    "name": "Check Status & Prepare Backup",
+    "func": "// Check server info to see if it's operational\nif (msg.payload.success && msg.payload.data) {\n    // Store server version\n    flow.set('serverVersion', msg.payload.data.version);\n    \n    // Create a backup with today's date\n    const today = new Date();\n    const dateStr = today.toISOString().split('T')[0]; // YYYY-MM-DD\n    \n    msg.payload = {\n        operation: 'backup-create',\n        tag: `automated-${dateStr}`\n    };\n    \n    return msg;\n} else {\n    // Server not responding properly\n    msg.payload = {\n        success: false,\n        operation: 'server-check',\n        error: {\n            message: 'Server not responding properly',\n            details: msg.payload\n        }\n    };\n    return [null, msg]; // Send to second output (error)\n}",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 580,
+    "y": 1140,
+    "wires": [["create-automated-backup"], ["admin-workflow-error"]]
+  },
+  {
+    "id": "create-automated-backup",
+    "type": "mealie-admin",
+    "z": "admin-operations-flow",
+    "name": "Create Backup",
+    "server": "server-config",
+    "operation": "backup-create",
+    "x": 380,
+    "y": 1180,
+    "wires": [["check-backup-status"]]
+  },
+  {
+    "id": "check-backup-status",
+    "type": "function",
+    "z": "admin-operations-flow",
+    "name": "Check Backup & Get Statistics",
+    "func": "// Check if backup was successful\nif (msg.payload.success) {\n    // Store backup filename\n    flow.set('backupFileName', msg.payload.data.fileName);\n    \n    // Get system statistics\n    msg.payload = {\n        operation: 'maintenance-summary'\n    };\n    \n    return msg;\n} else {\n    // Backup failed\n    msg.payload = {\n        success: false,\n        operation: 'backup-create',\n        error: {\n            message: 'Backup creation failed',\n            details: msg.payload.error\n        }\n    };\n    return [null, msg]; // Send to second output (error)\n}",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 590,
+    "y": 1180,
+    "wires": [["get-system-stats"], ["admin-workflow-error"]]
+  },
+  {
+    "id": "get-system-stats",
+    "type": "mealie-admin",
+    "z": "admin-operations-flow",
+    "name": "Get Statistics",
+    "server": "server-config",
+    "operation": "maintenance-summary",
+    "x": 380,
+    "y": 1220,
+    "wires": [["create-admin-report"]]
+  },
+  {
+    "id": "create-admin-report",
+    "type": "function",
+    "z": "admin-operations-flow",
+    "name": "Create Admin Report",
+    "func": "// Get stored values\nconst serverVersion = flow.get('serverVersion');\nconst backupFileName = flow.get('backupFileName');\n\n// Extract statistics\nconst stats = msg.payload.data || {};\n\n// Create admin report\nmsg.payload = {\n    success: true,\n    message: 'Admin workflow completed successfully',\n    report: {\n        date: new Date().toISOString(),\n        serverVersion: serverVersion,\n        backup: {\n            created: true,\n            fileName: backupFileName\n        },\n        statistics: {\n            totalRecipes: stats.totalRecipes || 0,\n            totalUsers: stats.totalUsers || 0,\n            totalGroups: stats.totalGroups || 0,\n            databaseSize: stats.databaseSize || 'unknown',\n            recipeImageCount: stats.recipeImageCount || 0\n        }\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 580,
+    "y": 1220,
+    "wires": [["admin-workflow-result"]]
+  },
+  {
+    "id": "admin-workflow-result",
+    "type": "debug",
+    "z": "admin-operations-flow",
+    "name": "Admin Workflow Success",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 390,
+    "y": 1260,
+    "wires": []
+  },
+  {
+    "id": "admin-workflow-error",
+    "type": "debug",
+    "z": "admin-operations-flow",
+    "name": "Admin Workflow Error",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 390,
+    "y": 1300,
+    "wires": []
+  }
+]

@@ -1,0 +1,582 @@
+[
+  {
+    "id": "recipe-flow",
+    "type": "tab",
+    "label": "Recipe Operations",
+    "disabled": false,
+    "info": "# Mealie Recipe Operations\n\nThis flow demonstrates common operations with the Mealie recipe domain node.\n\nIt showcases:\n- Searching for recipes\n- Getting a specific recipe by slug\n- Creating a new recipe\n- Updating an existing recipe\n- Managing recipe images\n- Working with recipe assets\n\nThe examples use both statically configured operations and dynamic operation specification via msg.payload.operation."
+  },
+  {
+    "id": "recipes-header",
+    "type": "comment",
+    "z": "recipe-flow",
+    "name": "Recipe Operations Examples",
+    "info": "",
+    "x": 180,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "recipe-server-config",
+    "type": "mealie-server-config",
+    "name": "My Mealie Server",
+    "baseUrl": "http://localhost:9000",
+    "apiKey": "",
+    "credentials": {
+      "username": "admin",
+      "password": "secret"
+    },
+    "x": 600,
+    "y": 40
+  },
+  {
+    "id": "search-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Search Recipes",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"params\":{\"page\":1,\"perPage\":5,\"orderBy\":\"name\",\"orderDirection\":\"asc\"}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 100,
+    "wires": [["search-node"]]
+  },
+  {
+    "id": "search-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Search Recipes",
+    "server": "recipe-server-config",
+    "operation": "search",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 360,
+    "y": 100,
+    "wires": [["search-debug"]]
+  },
+  {
+    "id": "search-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Search Results",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "get-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Get Recipe",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"slug\":\"pizza-dough\"}",
+    "payloadType": "json",
+    "x": 150,
+    "y": 160,
+    "wires": [["get-node"]]
+  },
+  {
+    "id": "get-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Get Recipe",
+    "server": "recipe-server-config",
+    "operation": "get",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 350,
+    "y": 160,
+    "wires": [["get-debug"]]
+  },
+  {
+    "id": "get-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Recipe Details",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 560,
+    "y": 160,
+    "wires": []
+  },
+  {
+    "id": "create-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Create Recipe",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"recipeData\":{\"name\":\"Simple Pasta\",\"description\":\"A quick and easy pasta dish\",\"recipeCategory\":[],\"tags\":[],\"recipeIngredient\":[{\"note\":\"dried\",\"unit\":\"grams\",\"food\":\"pasta\",\"quantity\":200,\"isFood\":true},{\"note\":\"\",\"unit\":\"tablespoons\",\"food\":\"olive oil\",\"quantity\":2,\"isFood\":true}],\"recipeInstructions\":[{\"text\":\"Boil water in a large pot\"},{\"text\":\"Add pasta and cook according to package instructions\"},{\"text\":\"Drain and toss with olive oil\"}]}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 220,
+    "wires": [["create-node"]]
+  },
+  {
+    "id": "create-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Create Recipe",
+    "server": "recipe-server-config",
+    "operation": "create",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 360,
+    "y": 220,
+    "wires": [["create-debug"]]
+  },
+  {
+    "id": "create-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Created Recipe",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "update-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Update Recipe",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"slug\":\"simple-pasta\",\"recipeData\":{\"description\":\"A quick and easy pasta dish with olive oil\",\"prepTime\":10,\"performTime\":15,\"totalTime\":25}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 280,
+    "wires": [["update-node"]]
+  },
+  {
+    "id": "update-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Update Recipe",
+    "server": "recipe-server-config",
+    "operation": "update",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 360,
+    "y": 280,
+    "wires": [["update-debug"]]
+  },
+  {
+    "id": "update-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Updated Recipe",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 280,
+    "wires": []
+  },
+  {
+    "id": "delete-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Delete Recipe",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"slug\":\"simple-pasta\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 340,
+    "wires": [["delete-node"]]
+  },
+  {
+    "id": "delete-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Delete Recipe",
+    "server": "recipe-server-config",
+    "operation": "delete",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 360,
+    "y": 340,
+    "wires": [["delete-debug"]]
+  },
+  {
+    "id": "delete-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Delete Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 560,
+    "y": 340,
+    "wires": []
+  },
+  {
+    "id": "dynamic-operation-header",
+    "type": "comment",
+    "z": "recipe-flow",
+    "name": "Dynamic Operation Examples",
+    "info": "",
+    "x": 190,
+    "y": 400,
+    "wires": []
+  },
+  {
+    "id": "dynamic-inject-get",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Get Recipe (Dynamic)",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"get\",\"slug\":\"pizza-dough\"}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 440,
+    "wires": [["dynamic-node"]]
+  },
+  {
+    "id": "dynamic-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Recipe (Dynamic)",
+    "server": "recipe-server-config",
+    "operation": "search",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 380,
+    "y": 480,
+    "wires": [["dynamic-debug"]]
+  },
+  {
+    "id": "dynamic-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 550,
+    "y": 480,
+    "wires": []
+  },
+  {
+    "id": "dynamic-inject-search",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Search Recipes (Dynamic)",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"search\",\"params\":{\"page\":1,\"perPage\":5,\"search\":\"pizza\"}}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 520,
+    "wires": [["dynamic-node"]]
+  },
+  {
+    "id": "image-management-header",
+    "type": "comment",
+    "z": "recipe-flow",
+    "name": "Recipe Image Management",
+    "info": "",
+    "x": 190,
+    "y": 580,
+    "wires": []
+  },
+  {
+    "id": "image-get-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Get Recipe Image",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"slug\":\"pizza-dough\",\"imageAction\":\"get\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 620,
+    "wires": [["image-node"]]
+  },
+  {
+    "id": "image-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Recipe Image",
+    "server": "recipe-server-config",
+    "operation": "image",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 360,
+    "y": 640,
+    "wires": [["image-debug"]]
+  },
+  {
+    "id": "image-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Image Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 560,
+    "y": 640,
+    "wires": []
+  },
+  {
+    "id": "file-in",
+    "type": "file in",
+    "z": "recipe-flow",
+    "name": "Load Image File",
+    "filename": "/path/to/image.jpg",
+    "format": "",
+    "chunk": false,
+    "sendError": false,
+    "encoding": "none",
+    "allProps": false,
+    "x": 170,
+    "y": 680,
+    "wires": [["prepare-image-upload"]]
+  },
+  {
+    "id": "prepare-image-upload",
+    "type": "function",
+    "z": "recipe-flow",
+    "name": "Prepare Image Upload",
+    "func": "// Create FormData with the image\nmsg.payload = {\n    slug: \"pizza-dough\",\n    imageAction: \"upload\",\n    imageData: msg.payload  // This should be the binary image data\n};\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 380,
+    "y": 680,
+    "wires": [["image-node"]]
+  },
+  {
+    "id": "asset-management-header",
+    "type": "comment",
+    "z": "recipe-flow",
+    "name": "Recipe Asset Management",
+    "info": "",
+    "x": 190,
+    "y": 740,
+    "wires": []
+  },
+  {
+    "id": "asset-list-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "List Recipe Assets",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"slug\":\"pizza-dough\",\"assetAction\":\"list\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 780,
+    "wires": [["asset-node"]]
+  },
+  {
+    "id": "asset-node",
+    "type": "mealie-recipe",
+    "z": "recipe-flow",
+    "name": "Recipe Assets",
+    "server": "recipe-server-config",
+    "operation": "asset",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 360,
+    "y": 800,
+    "wires": [["asset-debug"]]
+  },
+  {
+    "id": "asset-debug",
+    "type": "debug",
+    "z": "recipe-flow",
+    "name": "Asset Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 560,
+    "y": 800,
+    "wires": []
+  },
+  {
+    "id": "get-asset-inject",
+    "type": "inject",
+    "z": "recipe-flow",
+    "name": "Get Specific Asset",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"slug\":\"pizza-dough\",\"assetAction\":\"get\",\"assetId\":\"asset-123\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 840,
+    "wires": [["asset-node"]]
+  }
+]

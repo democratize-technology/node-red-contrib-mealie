@@ -1,0 +1,296 @@
+<!--
+  Admin domain node for Mealie API
+  Handles multiple admin operations in a single configurable node
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-admin', {
+        category: 'Mealie',
+        color: '#e58325',
+        defaults: {
+            name: { value: "" },
+            server: { value: "", type: "mealie-server-config", required: true },
+            operation: { value: "getInfo", required: true },
+            userId: { value: "" },
+            groupId: { value: "" },
+            backupId: { value: "" },
+            userData: { value: "{}" },
+            groupData: { value: "{}" },
+            taskName: { value: "" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "mealie.svg",
+        label: function () {
+            return this.name || "Mealie Admin";
+        },
+        paletteLabel: "Admin",
+        oneditprepare: function () {
+            // Get jQuery references to UI elements
+            const $operation = $("#node-input-operation");
+            const $userIdRow = $(".form-row.user-id");
+            const $groupIdRow = $(".form-row.group-id");
+            const $backupIdRow = $(".form-row.backup-id");
+            const $userDataRow = $(".form-row.user-data");
+            const $groupDataRow = $(".form-row.group-data");
+            const $taskNameRow = $(".form-row.task-name");
+
+            // Function to show/hide fields based on operation
+            function updateFields() {
+                const operation = $operation.val();
+
+                // Hide all operation-specific fields first
+                $userIdRow.hide();
+                $groupIdRow.hide();
+                $backupIdRow.hide();
+                $userDataRow.hide();
+                $groupDataRow.hide();
+                $taskNameRow.hide();
+
+                // Show relevant fields based on operation
+                switch (operation) {
+                    case 'getInfo':
+                        // No additional fields needed
+                        break;
+                    case 'getUsers':
+                        $userIdRow.show();
+                        break;
+                    case 'createUser':
+                        $userDataRow.show();
+                        break;
+                    case 'updateUser':
+                        $userIdRow.show();
+                        $userDataRow.show();
+                        break;
+                    case 'deleteUser':
+                        $userIdRow.show();
+                        break;
+                    case 'getGroups':
+                        $groupIdRow.show();
+                        break;
+                    case 'createGroup':
+                        $groupDataRow.show();
+                        break;
+                    case 'updateGroup':
+                        $groupIdRow.show();
+                        $groupDataRow.show();
+                        break;
+                    case 'deleteGroup':
+                        $groupIdRow.show();
+                        break;
+                    case 'getBackups':
+                        // No additional fields needed
+                        break;
+                    case 'createBackup':
+                        // No additional fields needed
+                        break;
+                    case 'restoreBackup':
+                        $backupIdRow.show();
+                        break;
+                    case 'deleteBackup':
+                        $backupIdRow.show();
+                        break;
+                    case 'runMaintenance':
+                        $taskNameRow.show();
+                        break;
+                }
+            }
+
+            // Initialize field visibility
+            updateFields();
+
+            // Update fields when operation changes
+            $operation.on("change", updateFields);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-admin">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="Select server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="getInfo">Get Server Info</option>
+            <optgroup label="User Management">
+                <option value="getUsers">Get Users</option>
+                <option value="createUser">Create User</option>
+                <option value="updateUser">Update User</option>
+                <option value="deleteUser">Delete User</option>
+            </optgroup>
+            <optgroup label="Group Management">
+                <option value="getGroups">Get Groups</option>
+                <option value="createGroup">Create Group</option>
+                <option value="updateGroup">Update Group</option>
+                <option value="deleteGroup">Delete Group</option>
+            </optgroup>
+            <optgroup label="Backup Management">
+                <option value="getBackups">Get Backups</option>
+                <option value="createBackup">Create Backup</option>
+                <option value="restoreBackup">Restore Backup</option>
+                <option value="deleteBackup">Delete Backup</option>
+            </optgroup>
+            <optgroup label="Maintenance">
+                <option value="runMaintenance">Run Maintenance Task</option>
+            </optgroup>
+        </select>
+    </div>
+    <div class="form-row user-id">
+        <label for="node-input-userId"><i class="fa fa-user"></i> User ID</label>
+        <input type="text" id="node-input-userId" placeholder="User ID (optional for getUsers)">
+    </div>
+    <div class="form-row group-id">
+        <label for="node-input-groupId"><i class="fa fa-users"></i> Group ID</label>
+        <input type="text" id="node-input-groupId" placeholder="Group ID (optional for getGroups)">
+    </div>
+    <div class="form-row backup-id">
+        <label for="node-input-backupId"><i class="fa fa-archive"></i> Backup ID</label>
+        <input type="text" id="node-input-backupId" placeholder="Backup ID">
+    </div>
+    <div class="form-row user-data">
+        <label for="node-input-userData"><i class="fa fa-file-code-o"></i> User Data</label>
+        <input type="text" id="node-input-userData" placeholder="User JSON data">
+    </div>
+    <div class="form-row group-data">
+        <label for="node-input-groupData"><i class="fa fa-file-code-o"></i> Group Data</label>
+        <input type="text" id="node-input-groupData" placeholder="Group JSON data">
+    </div>
+    <div class="form-row task-name">
+        <label for="node-input-taskName"><i class="fa fa-cog"></i> Task Name</label>
+        <input type="text" id="node-input-taskName" placeholder="Maintenance task name">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-admin">
+    <p>A consolidated node for performing various admin operations on Mealie server</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Server <span class="property-type">config</span></dt>
+        <dd>The Mealie server connection to use</dd>
+        <dt>Operation <span class="property-type">string</span></dt>
+        <dd>The operation to perform (can be overridden via msg.payload.operation)</dd>
+        <dt>User ID <span class="property-type">string</span></dt>
+        <dd>The user ID for user operations (can be overridden via msg.payload.userId)</dd>
+        <dt>Group ID <span class="property-type">string</span></dt>
+        <dd>The group ID for group operations (can be overridden via msg.payload.groupId)</dd>
+        <dt>Backup ID <span class="property-type">string</span></dt>
+        <dd>The backup ID for backup operations (can be overridden via msg.payload.backupId)</dd>
+        <dt>User Data <span class="property-type">json</span></dt>
+        <dd>The user data for user create/update operations (can be overridden via msg.payload.userData)</dd>
+        <dt>Group Data <span class="property-type">json</span></dt>
+        <dd>The group data for group create/update operations (can be overridden via msg.payload.groupData)</dd>
+        <dt>Task Name <span class="property-type">string</span></dt>
+        <dd>The maintenance task name (can be overridden via msg.payload.taskName)</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>Optional - The operation to perform (overrides node configuration)</dd>
+    </dl>
+
+    <h4>Operation: getInfo</h4>
+    <p>No additional parameters required</p>
+
+    <h4>Operation: getUsers</h4>
+    <dl class="message-properties">
+        <dt>payload.userId <span class="property-type">string</span></dt>
+        <dd>Optional - The user ID to retrieve. If not provided, all users are retrieved.</dd>
+    </dl>
+
+    <h4>Operation: createUser</h4>
+    <dl class="message-properties">
+        <dt>payload.userData <span class="property-type">object</span></dt>
+        <dd>The user data to create</dd>
+    </dl>
+
+    <h4>Operation: updateUser</h4>
+    <dl class="message-properties">
+        <dt>payload.userId <span class="property-type">string</span></dt>
+        <dd>The user ID to update</dd>
+        <dt>payload.userData <span class="property-type">object</span></dt>
+        <dd>The updated user data</dd>
+    </dl>
+
+    <h4>Operation: deleteUser</h4>
+    <dl class="message-properties">
+        <dt>payload.userId <span class="property-type">string</span></dt>
+        <dd>The user ID to delete</dd>
+    </dl>
+
+    <h4>Operation: getGroups</h4>
+    <dl class="message-properties">
+        <dt>payload.groupId <span class="property-type">string</span></dt>
+        <dd>Optional - The group ID to retrieve. If not provided, all groups are retrieved.</dd>
+    </dl>
+
+    <h4>Operation: createGroup</h4>
+    <dl class="message-properties">
+        <dt>payload.groupData <span class="property-type">object</span></dt>
+        <dd>The group data to create</dd>
+    </dl>
+
+    <h4>Operation: updateGroup</h4>
+    <dl class="message-properties">
+        <dt>payload.groupId <span class="property-type">string</span></dt>
+        <dd>The group ID to update</dd>
+        <dt>payload.groupData <span class="property-type">object</span></dt>
+        <dd>The updated group data</dd>
+    </dl>
+
+    <h4>Operation: deleteGroup</h4>
+    <dl class="message-properties">
+        <dt>payload.groupId <span class="property-type">string</span></dt>
+        <dd>The group ID to delete</dd>
+    </dl>
+
+    <h4>Operation: getBackups</h4>
+    <p>No additional parameters required</p>
+
+    <h4>Operation: createBackup</h4>
+    <p>No additional parameters required</p>
+
+    <h4>Operation: restoreBackup</h4>
+    <dl class="message-properties">
+        <dt>payload.backupId <span class="property-type">string</span></dt>
+        <dd>The backup ID to restore</dd>
+    </dl>
+
+    <h4>Operation: deleteBackup</h4>
+    <dl class="message-properties">
+        <dt>payload.backupId <span class="property-type">string</span></dt>
+        <dd>The backup ID to delete</dd>
+    </dl>
+
+    <h4>Operation: runMaintenance</h4>
+    <dl class="message-properties">
+        <dt>payload.taskName <span class="property-type">string</span></dt>
+        <dd>The maintenance task name to run</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Indicates success (true) or failure (false)</dd>
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>The operation that was performed</dd>
+        <dt>payload.data <span class="property-type">object</span></dt>
+        <dd>For successful operations: the operation result data</dd>
+        <dt>payload.error <span class="property-type">object</span></dt>
+        <dd>For failed operations: error details with message, code, and any additional information</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node provides administration functions for Mealie servers. You can either configure the operation in the node settings or override it dynamically via the input message.</p>
+    <p>Each operation has its own set of required parameters that can be provided either in the node configuration or in the input message.</p>
+    <p>For configuration-based usage, select the operation in the node settings and configure the relevant parameters. For dynamic usage, provide the operation and parameters in the input message.</p>
+    <p>On success, the payload will contain a success flag set to true and the operation result in the data property. On failure, the payload will contain a success flag set to false and error details in the error property.</p>
+    <p>Note: Admin operations require administrator privileges on the Mealie server.</p>
+</script>

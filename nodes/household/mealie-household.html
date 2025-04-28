@@ -1,0 +1,155 @@
+<!--
+  Household domain node for Mealie API
+  Handles multiple household operations in a single configurable node
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-household', {
+        category: 'Mealie',
+        color: '#e58325',
+        defaults: {
+            name: { value: "" },
+            server: { value: "", type: "mealie-server-config", required: true },
+            operation: { value: "get", required: true },
+            householdId: { value: "" },
+            preferencesData: { value: "{}" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "mealie.svg",
+        label: function () {
+            return this.name || "Mealie Household";
+        },
+        paletteLabel: "Household",
+        oneditprepare: function () {
+            // Get jQuery references to UI elements
+            const $operation = $("#node-input-operation");
+            const $householdIdRow = $(".form-row.household-id");
+            const $preferencesDataRow = $(".form-row.preferences-data");
+
+            // Function to show/hide fields based on operation
+            function updateFields() {
+                const operation = $operation.val();
+
+                // Hide all operation-specific fields first
+                $householdIdRow.hide();
+                $preferencesDataRow.hide();
+
+                // Show relevant fields based on operation
+                switch (operation) {
+                    case 'get':
+                        $householdIdRow.show();
+                        break;
+                    case 'getMembers':
+                    case 'getPreferences':
+                        $householdIdRow.show();
+                        break;
+                    case 'updatePreferences':
+                        $householdIdRow.show();
+                        $preferencesDataRow.show();
+                        break;
+                }
+            }
+
+            // Initialize field visibility
+            updateFields();
+
+            // Update fields when operation changes
+            $operation.on("change", updateFields);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-household">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="Select server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="get">Get Household</option>
+            <option value="getMembers">Get Members</option>
+            <option value="getPreferences">Get Preferences</option>
+            <option value="updatePreferences">Update Preferences</option>
+        </select>
+    </div>
+    <div class="form-row household-id">
+        <label for="node-input-householdId"><i class="fa fa-home"></i> Household ID</label>
+        <input type="text" id="node-input-householdId" placeholder="Household ID (optional for get)">
+    </div>
+    <div class="form-row preferences-data">
+        <label for="node-input-preferencesData"><i class="fa fa-cog"></i> Preferences Data</label>
+        <input type="text" id="node-input-preferencesData" placeholder="Preferences JSON data">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-household">
+    <p>A consolidated node for performing various operations on Mealie households</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Server <span class="property-type">config</span></dt>
+        <dd>The Mealie server connection to use</dd>
+        <dt>Operation <span class="property-type">string</span></dt>
+        <dd>The operation to perform (can be overridden via msg.payload.operation)</dd>
+        <dt>Household ID <span class="property-type">string</span></dt>
+        <dd>The household ID for operations that require it (can be overridden via msg.payload.householdId)</dd>
+        <dt>Preferences Data <span class="property-type">json</span></dt>
+        <dd>The preferences data for updatePreferences operation (can be overridden via msg.payload.preferencesData)</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>Optional - The operation to perform (overrides node configuration)</dd>
+    </dl>
+
+    <h4>Operation: get</h4>
+    <dl class="message-properties">
+        <dt>payload.householdId <span class="property-type">string</span></dt>
+        <dd>Optional - The household ID to retrieve. If not provided, all households are retrieved.</dd>
+    </dl>
+
+    <h4>Operation: getMembers</h4>
+    <dl class="message-properties">
+        <dt>payload.householdId <span class="property-type">string</span></dt>
+        <dd>The household ID to get members for</dd>
+    </dl>
+
+    <h4>Operation: getPreferences</h4>
+    <dl class="message-properties">
+        <dt>payload.householdId <span class="property-type">string</span></dt>
+        <dd>The household ID to get preferences for</dd>
+    </dl>
+
+    <h4>Operation: updatePreferences</h4>
+    <dl class="message-properties">
+        <dt>payload.householdId <span class="property-type">string</span></dt>
+        <dd>The household ID to update preferences for</dd>
+        <dt>payload.preferencesData <span class="property-type">object</span></dt>
+        <dd>The updated preferences data</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Indicates success (true) or failure (false)</dd>
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>The operation that was performed</dd>
+        <dt>payload.data <span class="property-type">object</span></dt>
+        <dd>For successful operations: the operation result data</dd>
+        <dt>payload.error <span class="property-type">object</span></dt>
+        <dd>For failed operations: error details with message, code, and any additional information</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node consolidates multiple household operations in a single configurable node. You can either configure the operation in the node settings or override it dynamically via the input message.</p>
+    <p>Each operation has its own set of required parameters that can be provided either in the node configuration or in the input message.</p>
+    <p>For configuration-based usage, select the operation in the node settings and configure the relevant parameters. For dynamic usage, provide the operation and parameters in the input message.</p>
+    <p>On success, the payload will contain a success flag set to true and the operation result in the data property. On failure, the payload will contain a success flag set to false and error details in the error property.</p>
+</script>

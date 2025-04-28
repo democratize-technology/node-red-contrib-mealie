@@ -1,0 +1,35 @@
+# Tests
+*.test.js
+*.test.mjs
+*.spec.js
+*.spec.mjs
+test/
+coverage/
+
+# Development files
+.github/
+.vscode/
+.idea/
+.editorconfig
+.eslintrc
+.eslintignore
+.prettierrc
+.prettierignore
+.travis.yml
+.gitignore
+.env*
+*.log
+*.tgz
+
+# Documentation source files
+docs/
+examples/
+CONTRIBUTING.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+
+# Special files not needed in the package
+*.tsbuildinfo
+tsconfig.json
+.DS_Store
+Thumbs.db

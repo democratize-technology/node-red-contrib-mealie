@@ -1,0 +1,559 @@
+[
+  {
+    "id": "household-shopping-flow",
+    "type": "tab",
+    "label": "Household and Shopping",
+    "disabled": false,
+    "info": "# Mealie Household & Shopping Operations\n\nThis flow demonstrates common operations with the Mealie household and shopping domain nodes.\n\nIt showcases:\n- Household management operations\n- Shopping list operations\n- Shopping list item operations\n- Adding recipes to shopping lists\n\nThe examples use both statically configured operations and dynamic operation specification via msg.payload.operation."
+  },
+  {
+    "id": "household-header",
+    "type": "comment",
+    "z": "household-shopping-flow",
+    "name": "Household Operations",
+    "info": "",
+    "x": 170,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "server-config",
+    "type": "mealie-server-config",
+    "name": "My Mealie Server",
+    "baseUrl": "http://localhost:9000",
+    "apiKey": "",
+    "credentials": {
+      "username": "admin",
+      "password": "secret"
+    },
+    "x": 600,
+    "y": 40
+  },
+  {
+    "id": "household-get-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Get Household",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 80,
+    "wires": [["household-node"]]
+  },
+  {
+    "id": "household-node",
+    "type": "mealie-household",
+    "z": "household-shopping-flow",
+    "name": "Household",
+    "server": "server-config",
+    "operation": "get",
+    "x": 360,
+    "y": 80,
+    "wires": [["household-debug"]]
+  },
+  {
+    "id": "household-debug",
+    "type": "debug",
+    "z": "household-shopping-flow",
+    "name": "Household Data",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 570,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "members-get-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Get Members",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"members\"}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 120,
+    "wires": [["household-node"]]
+  },
+  {
+    "id": "preferences-get-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Get Preferences",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"preferences-get\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 160,
+    "wires": [["household-node"]]
+  },
+  {
+    "id": "preferences-update-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Update Preferences",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"preferences-update\",\"preferencesData\":{\"recipePublic\":true,\"recipeShowNutrition\":true,\"recipeLandscapeView\":false,\"recipeDisableAmount\":false,\"recipeDisableComments\":false}}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 200,
+    "wires": [["household-node"]]
+  },
+  {
+    "id": "shopping-header",
+    "type": "comment",
+    "z": "household-shopping-flow",
+    "name": "Shopping List Operations",
+    "info": "",
+    "x": 190,
+    "y": 260,
+    "wires": []
+  },
+  {
+    "id": "shopping-get-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Get All Shopping Lists",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 300,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "shopping-node",
+    "type": "mealie-shopping",
+    "z": "household-shopping-flow",
+    "name": "Shopping",
+    "server": "server-config",
+    "operation": "list-get",
+    "x": 430,
+    "y": 300,
+    "wires": [["shopping-debug"]]
+  },
+  {
+    "id": "shopping-debug",
+    "type": "debug",
+    "z": "household-shopping-flow",
+    "name": "Shopping List Data",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 650,
+    "y": 300,
+    "wires": []
+  },
+  {
+    "id": "shopping-create-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Create Shopping List",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"list-create\",\"listData\":{\"name\":\"Weekly Groceries\",\"groupId\":\"123e4567-e89b-12d3-a456-426614174000\"}}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 340,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "shopping-update-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Update Shopping List",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"list-update\",\"shoppingListId\":\"123e4567-e89b-12d3-a456-426614174000\",\"listData\":{\"name\":\"Weekly Groceries Updated\"}}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 380,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "shopping-delete-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Delete Shopping List",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"list-delete\",\"shoppingListId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 420,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "shopping-items-header",
+    "type": "comment",
+    "z": "household-shopping-flow",
+    "name": "Shopping List Items",
+    "info": "",
+    "x": 170,
+    "y": 480,
+    "wires": []
+  },
+  {
+    "id": "items-get-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Get Shopping List Items",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"item-get\",\"shoppingListId\":\"123e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 520,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "items-create-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Add Item to Shopping List",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"item-create\",\"shoppingListId\":\"123e4567-e89b-12d3-a456-426614174000\",\"itemData\":{\"note\":\"organic\",\"checked\":false,\"isFood\":true,\"quantity\":1,\"unit\":\"lb\",\"food\":\"apples\"}}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 560,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "specific-item-get-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Get Specific Item",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"item-get-one\",\"shoppingListId\":\"123e4567-e89b-12d3-a456-426614174000\",\"itemId\":\"456e4567-e89b-12d3-a456-426614174000\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 600,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "recipe-shopping-header",
+    "type": "comment",
+    "z": "household-shopping-flow",
+    "name": "Recipe Integration",
+    "info": "",
+    "x": 160,
+    "y": 660,
+    "wires": []
+  },
+  {
+    "id": "recipe-add-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Add Recipe to Shopping List",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"recipe-add\",\"shoppingListId\":\"123e4567-e89b-12d3-a456-426614174000\",\"recipeId\":\"pizza-dough\",\"recipeData\":{\"recipeId\":\"pizza-dough\",\"recipeQuantity\":2,\"includeOptionalIngredients\":true}}",
+    "payloadType": "json",
+    "x": 190,
+    "y": 700,
+    "wires": [["shopping-node"]]
+  },
+  {
+    "id": "multi-operation-flow-header",
+    "type": "comment",
+    "z": "household-shopping-flow",
+    "name": "Example Multi-Step Flow",
+    "info": "",
+    "x": 180,
+    "y": 760,
+    "wires": []
+  },
+  {
+    "id": "flow-start-inject",
+    "type": "inject",
+    "z": "household-shopping-flow",
+    "name": "Create Shopping List and Add Items",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"list-create\",\"listData\":{\"name\":\"Dinner Party Shopping\",\"groupId\":\"123e4567-e89b-12d3-a456-426614174000\"}}",
+    "payloadType": "json",
+    "x": 220,
+    "y": 800,
+    "wires": [["create-list-flow"]]
+  },
+  {
+    "id": "create-list-flow",
+    "type": "mealie-shopping",
+    "z": "household-shopping-flow",
+    "name": "Create List",
+    "server": "server-config",
+    "operation": "list-create",
+    "x": 450,
+    "y": 800,
+    "wires": [["store-shopping-list-id"]]
+  },
+  {
+    "id": "store-shopping-list-id",
+    "type": "function",
+    "z": "household-shopping-flow",
+    "name": "Store List ID & Prepare Recipe Add",
+    "func": "// Extract the shopping list ID\nconst shoppingListId = msg.payload.data.id;\n\n// Store for later use\nflow.set('shoppingListId', shoppingListId);\n\n// Prepare to add a recipe to the list\nmsg.payload = {\n    operation: 'recipe-add',\n    shoppingListId: shoppingListId,\n    recipeData: {\n        recipeId: 'pizza-dough',\n        recipeQuantity: 1\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 680,
+    "y": 800,
+    "wires": [["add-recipe-flow"]]
+  },
+  {
+    "id": "add-recipe-flow",
+    "type": "mealie-shopping",
+    "z": "household-shopping-flow",
+    "name": "Add Recipe",
+    "server": "server-config",
+    "operation": "recipe-add",
+    "x": 450,
+    "y": 840,
+    "wires": [["prepare-add-items"]]
+  },
+  {
+    "id": "prepare-add-items",
+    "type": "function",
+    "z": "household-shopping-flow",
+    "name": "Prepare Additional Items",
+    "func": "// Get the stored shopping list ID\nconst shoppingListId = flow.get('shoppingListId');\n\n// Prepare to add manual items to the list\nmsg.payload = {\n    operation: 'item-create',\n    shoppingListId: shoppingListId,\n    itemData: {\n        note: 'for dessert',\n        checked: false,\n        isFood: true,\n        quantity: 1,\n        unit: 'pint',\n        food: 'ice cream'\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 680,
+    "y": 840,
+    "wires": [["add-items-flow"]]
+  },
+  {
+    "id": "add-items-flow",
+    "type": "mealie-shopping",
+    "z": "household-shopping-flow",
+    "name": "Add Items",
+    "server": "server-config",
+    "operation": "item-create",
+    "x": 450,
+    "y": 880,
+    "wires": [["get-final-list"]]
+  },
+  {
+    "id": "get-final-list",
+    "type": "function",
+    "z": "household-shopping-flow",
+    "name": "Prepare to Get Final List",
+    "func": "// Get the stored shopping list ID\nconst shoppingListId = flow.get('shoppingListId');\n\n// Prepare to get the final shopping list with all items\nmsg.payload = {\n    operation: 'item-get',\n    shoppingListId: shoppingListId\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 680,
+    "y": 880,
+    "wires": [["final-list-flow"]]
+  },
+  {
+    "id": "final-list-flow",
+    "type": "mealie-shopping",
+    "z": "household-shopping-flow",
+    "name": "Get Final List",
+    "server": "server-config",
+    "operation": "item-get",
+    "x": 450,
+    "y": 920,
+    "wires": [["flow-result-debug"]]
+  },
+  {
+    "id": "flow-result-debug",
+    "type": "debug",
+    "z": "household-shopping-flow",
+    "name": "Final Shopping List",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 670,
+    "y": 920,
+    "wires": []
+  }
+]

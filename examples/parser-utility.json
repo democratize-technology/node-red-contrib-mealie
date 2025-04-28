@@ -1,0 +1,518 @@
+[
+  {
+    "id": "parser-utility-flow",
+    "type": "tab",
+    "label": "Parser & Utility Operations",
+    "disabled": false,
+    "info": "# Mealie Parser & Utility Operations\n\nThis flow demonstrates common operations with the Mealie parser and utility domain nodes.\n\nIt showcases:\n- Recipe URL parsing\n- Ingredient text parsing\n- Schema information retrieval\n- Version information\n- Bulk recipe operations\n\nThe examples use both statically configured operations and dynamic operation specification via msg.payload.operation."
+  },
+  {
+    "id": "parser-header",
+    "type": "comment",
+    "z": "parser-utility-flow",
+    "name": "Parser Operations",
+    "info": "",
+    "x": 160,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "server-config",
+    "type": "mealie-server-config",
+    "name": "My Mealie Server",
+    "baseUrl": "http://localhost:9000",
+    "apiKey": "",
+    "credentials": {
+      "username": "admin",
+      "password": "secret"
+    },
+    "x": 600,
+    "y": 40
+  },
+  {
+    "id": "url-parser-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Parse Recipe URL",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"url\":\"https://www.allrecipes.com/recipe/20144/banana-banana-bread/\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 80,
+    "wires": [["url-parser-node"]]
+  },
+  {
+    "id": "url-parser-node",
+    "type": "mealie-parser",
+    "z": "parser-utility-flow",
+    "name": "URL Parser",
+    "server": "server-config",
+    "operation": "url",
+    "x": 360,
+    "y": 80,
+    "wires": [["parser-debug"]]
+  },
+  {
+    "id": "parser-debug",
+    "type": "debug",
+    "z": "parser-utility-flow",
+    "name": "Parser Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 560,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "text-parser-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Parse Ingredient Text",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"text\",\"text\":\"2 cups all-purpose flour\"}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 120,
+    "wires": [["text-parser-node"]]
+  },
+  {
+    "id": "text-parser-node",
+    "type": "mealie-parser",
+    "z": "parser-utility-flow",
+    "name": "Text Parser",
+    "server": "server-config",
+    "operation": "text",
+    "x": 360,
+    "y": 120,
+    "wires": [["parser-debug"]]
+  },
+  {
+    "id": "multi-text-parser-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Parse Multiple Ingredients",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"text\",\"mode\":\"multiple\",\"text\":\"2 cups all-purpose flour\\n1/2 tsp salt\\n1 cup white sugar\\n1 tsp baking soda\"}",
+    "payloadType": "json",
+    "x": 190,
+    "y": 160,
+    "wires": [["text-parser-node"]]
+  },
+  {
+    "id": "utility-header",
+    "type": "comment",
+    "z": "parser-utility-flow",
+    "name": "Utility Operations",
+    "info": "",
+    "x": 160,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "version-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Get Version Info",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 260,
+    "wires": [["version-node"]]
+  },
+  {
+    "id": "version-node",
+    "type": "mealie-utility",
+    "z": "parser-utility-flow",
+    "name": "Version Info",
+    "server": "server-config",
+    "operation": "version",
+    "x": 360,
+    "y": 260,
+    "wires": [["utility-debug"]]
+  },
+  {
+    "id": "utility-debug",
+    "type": "debug",
+    "z": "parser-utility-flow",
+    "name": "Utility Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 560,
+    "y": 260,
+    "wires": []
+  },
+  {
+    "id": "schema-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Get Recipe Schema",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"schema\",\"schemaType\":\"recipe\"}",
+    "payloadType": "json",
+    "x": 180,
+    "y": 300,
+    "wires": [["schema-node"]]
+  },
+  {
+    "id": "schema-node",
+    "type": "mealie-utility",
+    "z": "parser-utility-flow",
+    "name": "Schema Info",
+    "server": "server-config",
+    "operation": "schema",
+    "x": 360,
+    "y": 300,
+    "wires": [["utility-debug"]]
+  },
+  {
+    "id": "user-schema-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Get User Schema",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"schema\",\"schemaType\":\"user\"}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 340,
+    "wires": [["schema-node"]]
+  },
+  {
+    "id": "bulk-header",
+    "type": "comment",
+    "z": "parser-utility-flow",
+    "name": "Bulk Operations",
+    "info": "",
+    "x": 160,
+    "y": 400,
+    "wires": []
+  },
+  {
+    "id": "bulk-export-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Export Recipes",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"options\":{\"includeImages\":true}}",
+    "payloadType": "json",
+    "x": 160,
+    "y": 440,
+    "wires": [["bulk-export-node"]]
+  },
+  {
+    "id": "bulk-export-node",
+    "type": "mealie-bulk",
+    "z": "parser-utility-flow",
+    "name": "Bulk Export",
+    "server": "server-config",
+    "operation": "export",
+    "x": 360,
+    "y": 440,
+    "wires": [["bulk-debug"]]
+  },
+  {
+    "id": "bulk-debug",
+    "type": "debug",
+    "z": "parser-utility-flow",
+    "name": "Bulk Result",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 550,
+    "y": 440,
+    "wires": []
+  },
+  {
+    "id": "bulk-import-inject",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Import Recipes",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"operation\":\"import\",\"urls\":[\"https://www.allrecipes.com/recipe/20144/banana-banana-bread/\",\"https://www.allrecipes.com/recipe/228641/perfectly-moist-pumpkin-bread/\"]}",
+    "payloadType": "json",
+    "x": 170,
+    "y": 480,
+    "wires": [["bulk-import-node"]]
+  },
+  {
+    "id": "bulk-import-node",
+    "type": "mealie-bulk",
+    "z": "parser-utility-flow",
+    "name": "Bulk Import",
+    "server": "server-config",
+    "operation": "import",
+    "x": 360,
+    "y": 480,
+    "wires": [["bulk-debug"]]
+  },
+  {
+    "id": "workflow-header",
+    "type": "comment",
+    "z": "parser-utility-flow",
+    "name": "Recipe Import Workflow",
+    "info": "",
+    "x": 170,
+    "y": 540,
+    "wires": []
+  },
+  {
+    "id": "import-flow-start",
+    "type": "inject",
+    "z": "parser-utility-flow",
+    "name": "Start Import Workflow",
+    "props": [
+      {
+        "p": "payload"
+      },
+      {
+        "p": "topic",
+        "vt": "str"
+      }
+    ],
+    "repeat": "",
+    "crontab": "",
+    "once": false,
+    "onceDelay": 0.1,
+    "topic": "",
+    "payload": "{\"url\":\"https://www.allrecipes.com/recipe/20144/banana-banana-bread/\"}",
+    "payloadType": "json",
+    "x": 190,
+    "y": 580,
+    "wires": [["parse-then-create"]]
+  },
+  {
+    "id": "parse-then-create",
+    "type": "mealie-parser",
+    "z": "parser-utility-flow",
+    "name": "Parse URL",
+    "server": "server-config",
+    "operation": "url",
+    "x": 350,
+    "y": 580,
+    "wires": [["check-parse-result"]]
+  },
+  {
+    "id": "check-parse-result",
+    "type": "function",
+    "z": "parser-utility-flow",
+    "name": "Check Parse Result & Create Recipe",
+    "func": "// Check if we got a valid recipe from parsing\nif (msg.payload.success && msg.payload.data) {\n    // Use the parsed recipe data to create a new recipe\n    msg.payload = {\n        operation: 'create',\n        recipeData: msg.payload.data\n    };\n    \n    // Pass to next node\n    return msg;\n} else {\n    // Parsing failed\n    msg.payload = {\n        success: false,\n        operation: 'url-parse',\n        error: {\n            message: 'Failed to parse recipe URL',\n            details: msg.payload.error || 'Unknown error'\n        }\n    };\n    return [null, msg]; // Send to second output (error)\n}",
+    "outputs": 2,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 560,
+    "y": 580,
+    "wires": [["create-recipe"], ["workflow-error"]]
+  },
+  {
+    "id": "create-recipe",
+    "type": "mealie-recipe",
+    "z": "parser-utility-flow",
+    "name": "Create Recipe",
+    "server": "server-config",
+    "operation": "create",
+    "slug": "",
+    "recipeData": "{}",
+    "x": 360,
+    "y": 620,
+    "wires": [["check-create-result"]]
+  },
+  {
+    "id": "check-create-result",
+    "type": "function",
+    "z": "parser-utility-flow",
+    "name": "Check Creation & Parse Ingredients",
+    "func": "// Check if recipe was created successfully\nif (msg.payload.success && msg.payload.data) {\n    // Store recipe data for later\n    flow.set('importedRecipe', msg.payload.data);\n    \n    // Extract ingredients text for parsing\n    const ingredients = [];\n    if (msg.payload.data.recipeIngredient && msg.payload.data.recipeIngredient.length > 0) {\n        // Extract 'note' field from ingredients to reparse them\n        msg.payload.data.recipeIngredient.forEach(item => {\n            if (item.note) {\n                ingredients.push(item.note);\n            }\n        });\n    }\n    \n    if (ingredients.length > 0) {\n        // Prepare to parse ingredients\n        msg.payload = {\n            operation: 'text',\n            mode: 'multiple',\n            text: ingredients.join('\\n')\n        };\n        return msg;\n    } else {\n        // No ingredients to parse, skip to final success\n        msg.payload = {\n            success: true,\n            message: 'Recipe imported successfully but no ingredients to parse',\n            recipe: msg.payload.data\n        };\n        return [null, null, msg]; // Send to third output (final success)\n    }\n} else {\n    // Recipe creation failed\n    msg.payload = {\n        success: false,\n        operation: 'recipe-create',\n        error: {\n            message: 'Failed to create recipe',\n            details: msg.payload.error || 'Unknown error'\n        }\n    };\n    return [null, msg, null]; // Send to second output (error)\n}",
+    "outputs": 3,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 570,
+    "y": 620,
+    "wires": [["parse-ingredients"], ["workflow-error"], ["workflow-success"]]
+  },
+  {
+    "id": "parse-ingredients",
+    "type": "mealie-parser",
+    "z": "parser-utility-flow",
+    "name": "Parse Ingredients",
+    "server": "server-config",
+    "operation": "text",
+    "x": 370,
+    "y": 660,
+    "wires": [["create-workflow-summary"]]
+  },
+  {
+    "id": "create-workflow-summary",
+    "type": "function",
+    "z": "parser-utility-flow",
+    "name": "Create Workflow Summary",
+    "func": "// Get stored recipe data\nconst importedRecipe = flow.get('importedRecipe');\n\n// Check if ingredient parsing was successful\nconst parsedIngredients = msg.payload.success ? msg.payload.data : [];\n\n// Create workflow summary\nmsg.payload = {\n    success: true,\n    message: 'Recipe import workflow completed successfully',\n    data: {\n        recipe: {\n            name: importedRecipe.name,\n            slug: importedRecipe.slug,\n            id: importedRecipe.id\n        },\n        parsedIngredients: {\n            count: parsedIngredients.length,\n            items: parsedIngredients\n        }\n    }\n};\n\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 590,
+    "y": 660,
+    "wires": [["workflow-success"]]
+  },
+  {
+    "id": "workflow-success",
+    "type": "debug",
+    "z": "parser-utility-flow",
+    "name": "Import Workflow Success",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 390,
+    "y": 700,
+    "wires": []
+  },
+  {
+    "id": "workflow-error",
+    "type": "debug",
+    "z": "parser-utility-flow",
+    "name": "Import Workflow Error",
+    "active": true,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 390,
+    "y": 740,
+    "wires": []
+  }
+]

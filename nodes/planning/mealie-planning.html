@@ -1,0 +1,169 @@
+<!--
+  Planning domain node for Mealie API
+  Handles multiple meal planning operations in a single configurable node
+-->
+
+<script type="text/javascript">
+    RED.nodes.registerType('mealie-planning', {
+        category: 'Mealie',
+        color: '#e58325',
+        defaults: {
+            name: { value: "" },
+            server: { value: "", type: "mealie-server-config", required: true },
+            operation: { value: "get", required: true },
+            mealPlanId: { value: "" },
+            planData: { value: "{}" },
+            queryParams: { value: "{}" }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "mealie.svg",
+        label: function () {
+            return this.name || "Mealie Planning";
+        },
+        paletteLabel: "Planning",
+        oneditprepare: function () {
+            // Get jQuery references to UI elements
+            const $operation = $("#node-input-operation");
+            const $mealPlanIdRow = $(".form-row.meal-plan-id");
+            const $planDataRow = $(".form-row.plan-data");
+            const $queryParamsRow = $(".form-row.query-params");
+
+            // Function to show/hide fields based on operation
+            function updateFields() {
+                const operation = $operation.val();
+
+                // Hide all operation-specific fields first
+                $mealPlanIdRow.hide();
+                $planDataRow.hide();
+                $queryParamsRow.hide();
+
+                // Show relevant fields based on operation
+                switch (operation) {
+                    case 'get':
+                        $mealPlanIdRow.show();
+                        $queryParamsRow.show();
+                        break;
+                    case 'create':
+                        $planDataRow.show();
+                        break;
+                    case 'update':
+                        $mealPlanIdRow.show();
+                        $planDataRow.show();
+                        break;
+                    case 'delete':
+                        $mealPlanIdRow.show();
+                        break;
+                }
+            }
+
+            // Initialize field visibility
+            updateFields();
+
+            // Update fields when operation changes
+            $operation.on("change", updateFields);
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="mealie-planning">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server"><i class="fa fa-server"></i> Server</label>
+        <input type="text" id="node-input-server" placeholder="Select server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-operation"><i class="fa fa-tasks"></i> Operation</label>
+        <select id="node-input-operation">
+            <option value="get">Get Meal Plan</option>
+            <option value="create">Create Meal Plan</option>
+            <option value="update">Update Meal Plan</option>
+            <option value="delete">Delete Meal Plan</option>
+        </select>
+    </div>
+    <div class="form-row meal-plan-id">
+        <label for="node-input-mealPlanId"><i class="fa fa-calendar"></i> Meal Plan ID</label>
+        <input type="text" id="node-input-mealPlanId" placeholder="Meal Plan ID (optional for get)">
+    </div>
+    <div class="form-row plan-data">
+        <label for="node-input-planData"><i class="fa fa-file-code-o"></i> Plan Data</label>
+        <input type="text" id="node-input-planData" placeholder="Meal Plan JSON data">
+    </div>
+    <div class="form-row query-params">
+        <label for="node-input-queryParams"><i class="fa fa-filter"></i> Query Parameters</label>
+        <input type="text" id="node-input-queryParams" placeholder="Query parameters as JSON (e.g., {&quot;startDate&quot;: &quot;2025-01-01&quot;})">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="mealie-planning">
+    <p>A consolidated node for performing various operations on Mealie meal plans</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Server <span class="property-type">config</span></dt>
+        <dd>The Mealie server connection to use</dd>
+        <dt>Operation <span class="property-type">string</span></dt>
+        <dd>The operation to perform (can be overridden via msg.payload.operation)</dd>
+        <dt>Meal Plan ID <span class="property-type">string</span></dt>
+        <dd>The meal plan ID for operations that require it (can be overridden via msg.payload.mealPlanId)</dd>
+        <dt>Plan Data <span class="property-type">json</span></dt>
+        <dd>The meal plan data for create/update operations (can be overridden via msg.payload.planData)</dd>
+        <dt>Query Parameters <span class="property-type">json</span></dt>
+        <dd>Query parameters for filtering meal plans (can be overridden via msg.payload.queryParams)</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <dl class="message-properties">
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>Optional - The operation to perform (overrides node configuration)</dd>
+    </dl>
+
+    <h4>Operation: get</h4>
+    <dl class="message-properties">
+        <dt>payload.mealPlanId <span class="property-type">string</span></dt>
+        <dd>Optional - The meal plan ID to retrieve. If not provided, all meal plans are retrieved.</dd>
+        <dt>payload.queryParams <span class="property-type">object</span></dt>
+        <dd>Optional - Query parameters for filtering meal plans (e.g., startDate, endDate)</dd>
+    </dl>
+
+    <h4>Operation: create</h4>
+    <dl class="message-properties">
+        <dt>payload.planData <span class="property-type">object</span></dt>
+        <dd>The meal plan data to create</dd>
+    </dl>
+
+    <h4>Operation: update</h4>
+    <dl class="message-properties">
+        <dt>payload.mealPlanId <span class="property-type">string</span></dt>
+        <dd>The meal plan ID to update</dd>
+        <dt>payload.planData <span class="property-type">object</span></dt>
+        <dd>The updated meal plan data</dd>
+    </dl>
+
+    <h4>Operation: delete</h4>
+    <dl class="message-properties">
+        <dt>payload.mealPlanId <span class="property-type">string</span></dt>
+        <dd>The meal plan ID to delete</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <dl class="message-properties">
+        <dt>payload.success <span class="property-type">boolean</span></dt>
+        <dd>Indicates success (true) or failure (false)</dd>
+        <dt>payload.operation <span class="property-type">string</span></dt>
+        <dd>The operation that was performed</dd>
+        <dt>payload.data <span class="property-type">object</span></dt>
+        <dd>For successful operations: the operation result data</dd>
+        <dt>payload.error <span class="property-type">object</span></dt>
+        <dd>For failed operations: error details with message, code, and any additional information</dd>
+    </dl>
+
+    <h3>Details</h3>
+    <p>This node consolidates multiple meal planning operations in a single configurable node. You can either configure the operation in the node settings or override it dynamically via the input message.</p>
+    <p>Each operation has its own set of required parameters that can be provided either in the node configuration or in the input message.</p>
+    <p>For configuration-based usage, select the operation in the node settings and configure the relevant parameters. For dynamic usage, provide the operation and parameters in the input message.</p>
+    <p>On success, the payload will contain a success flag set to true and the operation result in the data property. On failure, the payload will contain a success flag set to false and error details in the error property.</p>
+</script>
