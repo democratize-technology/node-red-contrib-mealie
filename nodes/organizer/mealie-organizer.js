@@ -10,7 +10,7 @@ const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../li
 module.exports = function(RED) {
     function MealieOrganizerNode(config) {
         RED.nodes.createNode(this, config);
-        
+
         // Copy config properties to node
         this.name = config.name;
         this.server = config.server;
@@ -20,27 +20,27 @@ module.exports = function(RED) {
         this.cookbookId = config.cookbookId;
         this.cookbookData = config.cookbookData;
         this.config = RED.nodes.getNode(this.server);
-        
+
         const node = this;
         let statusTimer;
-        
+
         // Handle input message
         node.on('input', async function(msg, send, done) {
             // Ensure backward compatibility with Node-RED < 1.0
             send = send || function() { node.send.apply(node, arguments); };
             done = done || function(error) { if (error) { node.error(error, msg); } };
-            
+
             try {
                 // Determine operation (from config or payload)
                 const operation = msg.payload?.operation || node.operation;
-                
+
                 if (!operation) {
                     throw new ValidationError('No operation specified. Set in node config or msg.payload.operation');
                 }
-                
+
                 // Execute the appropriate operation
                 let result;
-                
+
                 switch (operation) {
                 case 'getCategories':
                     result = await handleGetCategoriesOperation(node, msg);
@@ -57,18 +57,18 @@ module.exports = function(RED) {
                 default:
                     throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
-                
+
                 // Send successful result
                 msg.payload = {
                     success: true,
                     operation: operation,
                     data: result
                 };
-                
+
                 // Set node status to show success
                 clearStatusTimer(statusTimer);
                 statusTimer = setSuccessStatus(node, operation);
-                
+
                 // Use single output pattern
                 send(msg);
                 done();
@@ -83,24 +83,24 @@ module.exports = function(RED) {
                         details: error.details || null
                     }
                 };
-                
+
                 // Set node status to show error
                 clearStatusTimer(statusTimer);
                 statusTimer = setErrorStatus(node, error.message);
-                
+
                 // Log error to runtime
                 node.error(error.message, msg);
-                
+
                 // Send error message on the same output
                 send(msg);
                 done(error);
             }
         });
-        
+
         // Helper for getCategories operation
         async function handleGetCategoriesOperation(node, msg) {
             const categoryId = msg.payload?.categoryId || node.categoryId;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -114,11 +114,11 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for getTags operation
         async function handleGetTagsOperation(node, msg) {
             const tagId = msg.payload?.tagId || node.tagId;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -132,11 +132,11 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for getCookbooks operation
         async function handleGetCookbooksOperation(node, msg) {
             const cookbookId = msg.payload?.cookbookId || node.cookbookId;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -150,18 +150,18 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for createCookbook operation
         async function handleCreateCookbookOperation(node, msg) {
             const cookbookData = msg.payload?.cookbookData || node.cookbookData;
-            
+
             if (!cookbookData) {
                 throw new ValidationError('No cookbook data provided for createCookbook operation. Specify in node config or msg.payload.cookbookData');
             }
-            
+
             // Parse the cookbook data if it's a string
             const parsedCookbookData = typeof cookbookData === 'string' ? JSON.parse(cookbookData) : cookbookData;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -171,12 +171,12 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Clean up timer on node close
         node.on('close', function() {
             clearStatusTimer(statusTimer);
         });
     }
-    
+
     RED.nodes.registerType('mealie-organizer', MealieOrganizerNode);
 };

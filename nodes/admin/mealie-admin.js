@@ -10,7 +10,7 @@ const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../li
 module.exports = function(RED) {
     function MealieAdminNode(config) {
         RED.nodes.createNode(this, config);
-        
+
         // Copy config properties to node
         this.name = config.name;
         this.server = config.server;
@@ -22,27 +22,27 @@ module.exports = function(RED) {
         this.groupData = config.groupData;
         this.taskName = config.taskName;
         this.config = RED.nodes.getNode(this.server);
-        
+
         const node = this;
         let statusTimer;
-        
+
         // Handle input message
         node.on('input', async function(msg, send, done) {
             // Ensure backward compatibility with Node-RED < 1.0
             send = send || function() { node.send.apply(node, arguments); };
             done = done || function(error) { if (error) { node.error(error, msg); } };
-            
+
             try {
                 // Determine operation (from config or payload)
                 const operation = msg.payload?.operation || node.operation;
-                
+
                 if (!operation) {
                     throw new ValidationError('No operation specified. Set in node config or msg.payload.operation');
                 }
-                
+
                 // Execute the appropriate operation
                 let result;
-                
+
                 switch (operation) {
                 case 'getInfo':
                     result = await handleGetInfoOperation(node, msg);
@@ -89,18 +89,18 @@ module.exports = function(RED) {
                 default:
                     throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
-                
+
                 // Send successful result
                 msg.payload = {
                     success: true,
                     operation: operation,
                     data: result
                 };
-                
+
                 // Set node status to show success
                 clearStatusTimer(statusTimer);
                 statusTimer = setSuccessStatus(node, operation);
-                
+
                 // Use single output pattern
                 send(msg);
                 done();
@@ -115,20 +115,20 @@ module.exports = function(RED) {
                         details: error.details || null
                     }
                 };
-                
+
                 // Set node status to show error
                 clearStatusTimer(statusTimer);
                 statusTimer = setErrorStatus(node, error.message);
-                
+
                 // Log error to runtime
                 node.error(error.message, msg);
-                
+
                 // Send error message on the same output
                 send(msg);
                 done(error);
             }
         });
-        
+
         // Helper for getInfo operation
         async function handleGetInfoOperation(node, msg) {
             return await executeWithClient(
@@ -140,11 +140,11 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for getUsers operation
         async function handleGetUsersOperation(node, msg) {
             const userId = msg.payload?.userId || node.userId;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -158,18 +158,18 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for createUser operation
         async function handleCreateUserOperation(node, msg) {
             const userData = msg.payload?.userData || node.userData;
-            
+
             if (!userData) {
                 throw new ValidationError('No user data provided for createUser operation. Specify in node config or msg.payload.userData');
             }
-            
+
             // Parse the user data if it's a string
             const parsedUserData = typeof userData === 'string' ? JSON.parse(userData) : userData;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -179,23 +179,23 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for updateUser operation
         async function handleUpdateUserOperation(node, msg) {
             const userId = msg.payload?.userId || node.userId;
             const userData = msg.payload?.userData || node.userData;
-            
+
             if (!userId) {
                 throw new ValidationError('No user ID provided for updateUser operation. Specify in node config or msg.payload.userId');
             }
-            
+
             if (!userData) {
                 throw new ValidationError('No user data provided for updateUser operation. Specify in node config or msg.payload.userData');
             }
-            
+
             // Parse the user data if it's a string
             const parsedUserData = typeof userData === 'string' ? JSON.parse(userData) : userData;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -205,15 +205,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for deleteUser operation
         async function handleDeleteUserOperation(node, msg) {
             const userId = msg.payload?.userId || node.userId;
-            
+
             if (!userId) {
                 throw new ValidationError('No user ID provided for deleteUser operation. Specify in node config or msg.payload.userId');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -223,11 +223,11 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for getGroups operation
         async function handleGetGroupsOperation(node, msg) {
             const groupId = msg.payload?.groupId || node.groupId;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -241,18 +241,18 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for createGroup operation
         async function handleCreateGroupOperation(node, msg) {
             const groupData = msg.payload?.groupData || node.groupData;
-            
+
             if (!groupData) {
                 throw new ValidationError('No group data provided for createGroup operation. Specify in node config or msg.payload.groupData');
             }
-            
+
             // Parse the group data if it's a string
             const parsedGroupData = typeof groupData === 'string' ? JSON.parse(groupData) : groupData;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -262,23 +262,23 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for updateGroup operation
         async function handleUpdateGroupOperation(node, msg) {
             const groupId = msg.payload?.groupId || node.groupId;
             const groupData = msg.payload?.groupData || node.groupData;
-            
+
             if (!groupId) {
                 throw new ValidationError('No group ID provided for updateGroup operation. Specify in node config or msg.payload.groupId');
             }
-            
+
             if (!groupData) {
                 throw new ValidationError('No group data provided for updateGroup operation. Specify in node config or msg.payload.groupData');
             }
-            
+
             // Parse the group data if it's a string
             const parsedGroupData = typeof groupData === 'string' ? JSON.parse(groupData) : groupData;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -288,15 +288,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for deleteGroup operation
         async function handleDeleteGroupOperation(node, msg) {
             const groupId = msg.payload?.groupId || node.groupId;
-            
+
             if (!groupId) {
                 throw new ValidationError('No group ID provided for deleteGroup operation. Specify in node config or msg.payload.groupId');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -306,7 +306,7 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for getBackups operation
         async function handleGetBackupsOperation(node, msg) {
             return await executeWithClient(
@@ -318,7 +318,7 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for createBackup operation
         async function handleCreateBackupOperation(node, msg) {
             return await executeWithClient(
@@ -330,15 +330,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for restoreBackup operation
         async function handleRestoreBackupOperation(node, msg) {
             const backupId = msg.payload?.backupId || node.backupId;
-            
+
             if (!backupId) {
                 throw new ValidationError('No backup ID provided for restoreBackup operation. Specify in node config or msg.payload.backupId');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -348,15 +348,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for deleteBackup operation
         async function handleDeleteBackupOperation(node, msg) {
             const backupId = msg.payload?.backupId || node.backupId;
-            
+
             if (!backupId) {
                 throw new ValidationError('No backup ID provided for deleteBackup operation. Specify in node config or msg.payload.backupId');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -366,15 +366,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for runMaintenance operation
         async function handleRunMaintenanceOperation(node, msg) {
             const taskName = msg.payload?.taskName || node.taskName;
-            
+
             if (!taskName) {
                 throw new ValidationError('No task name provided for runMaintenance operation. Specify in node config or msg.payload.taskName');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -384,12 +384,12 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Clean up timer on node close
         node.on('close', function() {
             clearStatusTimer(statusTimer);
         });
     }
-    
+
     RED.nodes.registerType('mealie-admin', MealieAdminNode);
 };
