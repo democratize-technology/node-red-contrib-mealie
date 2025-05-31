@@ -66,6 +66,96 @@ describe('Error Utilities', function() {
         });
     });
     
+    describe('transformError', function() {
+        it('should transform FetchError to NetworkError', function() {
+            const fetchError = new Error('Connection failed');
+            fetchError.name = 'FetchError';
+            
+            const transformed = errors.transformError(fetchError);
+            transformed.should.be.instanceof(errors.NetworkError);
+            transformed.message.should.equal('Connection failed: Connection failed');
+        });
+        
+        it('should transform ECONNREFUSED to NetworkError', function() {
+            const connError = new Error('Connection refused');
+            connError.code = 'ECONNREFUSED';
+            
+            const transformed = errors.transformError(connError);
+            transformed.should.be.instanceof(errors.NetworkError);
+            transformed.message.should.equal('Connection failed: Connection refused');
+        });
+        
+        it('should transform ETIMEDOUT to NetworkError', function() {
+            const timeoutError = new Error('Connection timeout');
+            timeoutError.code = 'ETIMEDOUT';
+            
+            const transformed = errors.transformError(timeoutError);
+            transformed.should.be.instanceof(errors.NetworkError);
+            transformed.message.should.equal('Connection failed: Connection timeout');
+        });
+        
+        it('should transform 429 status to RateLimitError', function() {
+            const rateLimitError = new Error('Too Many Requests');
+            rateLimitError.statusCode = 429;
+            
+            const transformed = errors.transformError(rateLimitError);
+            transformed.should.be.instanceof(errors.RateLimitError);
+            transformed.message.should.equal('Rate limit exceeded');
+        });
+        
+        it('should transform 401 status to AuthenticationError', function() {
+            const authError = new Error('Unauthorized');
+            authError.statusCode = 401;
+            
+            const transformed = errors.transformError(authError);
+            transformed.should.be.instanceof(errors.AuthenticationError);
+            transformed.message.should.equal('Authentication failed');
+        });
+        
+        it('should transform 403 status to AuthenticationError', function() {
+            const authError = new Error('Forbidden');
+            authError.statusCode = 403;
+            
+            const transformed = errors.transformError(authError);
+            transformed.should.be.instanceof(errors.AuthenticationError);
+            transformed.message.should.equal('Authentication failed');
+        });
+        
+        it('should transform 400 status to ValidationError', function() {
+            const validationError = new Error('Bad Request');
+            validationError.statusCode = 400;
+            
+            const transformed = errors.transformError(validationError);
+            transformed.should.be.instanceof(errors.ValidationError);
+            transformed.message.should.equal('Invalid request data');
+        });
+        
+        it('should return MealieError instances unchanged', function() {
+            const mealieError = new errors.MealieError('Test', 'SPECIFIC_CODE');
+            
+            const transformed = errors.transformError(mealieError);
+            transformed.should.equal(mealieError);
+        });
+        
+        it('should wrap unknown errors as MealieError', function() {
+            const unknownError = new Error('Unknown error');
+            
+            const transformed = errors.transformError(unknownError);
+            transformed.should.be.instanceof(errors.MealieError);
+            transformed.should.have.property('code', 'UNKNOWN_ERROR');
+            transformed.message.should.equal('Unknown error');
+        });
+        
+        it('should preserve statusCode for unknown errors', function() {
+            const unknownError = new Error('Server error');
+            unknownError.statusCode = 500;
+            
+            const transformed = errors.transformError(unknownError);
+            transformed.should.be.instanceof(errors.MealieError);
+            transformed.should.have.property('statusCode', 500);
+        });
+    });
+    
     describe('handleError', function() {
         let mockNode;
         let msg;
