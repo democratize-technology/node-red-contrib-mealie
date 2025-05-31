@@ -137,6 +137,14 @@ describe('Error Utilities', function() {
             transformed.should.equal(mealieError);
         });
         
+        it('should not transform already MealieError subclass instances', function() {
+            const networkError = new errors.NetworkError('Already a NetworkError');
+            
+            const transformed = errors.transformError(networkError);
+            transformed.should.equal(networkError);
+            transformed.should.be.instanceof(errors.NetworkError);
+        });
+        
         it('should wrap unknown errors as MealieError', function() {
             const unknownError = new Error('Unknown error');
             
