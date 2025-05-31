@@ -41,6 +41,9 @@ Represents invalid input or parameter issues:
 - Missing required parameters
 - Invalid parameter values
 - Invalid operation names
+- Malformed JSON input
+- Oversized input data
+- Security violations (prototype pollution attempts)
 
 ### ConfigurationError
 
