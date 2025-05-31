@@ -36,7 +36,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "cockatiel": "^3.2.1",
     "node-mealie": "^0.1.1"
   },
   "devDependencies": {
