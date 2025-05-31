@@ -30,6 +30,21 @@ describe('Error Utilities', function() {
         });
     });
     
+    describe('RateLimitError', function() {
+        it('should create a rate limit error', function() {
+            const error = new errors.RateLimitError('Rate limit exceeded');
+            error.should.be.instanceof(errors.MealieError);
+            error.should.have.property('name', 'RateLimitError');
+            error.should.have.property('code', 'RATE_LIMIT_ERROR');
+        });
+        
+        it('should include details when provided', function() {
+            const details = { retryAfter: 60 };
+            const error = new errors.RateLimitError('Rate limit exceeded', details);
+            error.should.have.property('details', details);
+        });
+    });
+    
     describe('AuthenticationError', function() {
         it('should create an authentication error', function() {
             const error = new errors.AuthenticationError('Auth failed');
@@ -134,6 +149,36 @@ describe('Error Utilities', function() {
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.NetworkError);
+            }
+        });
+        
+        it('should transform ETIMEDOUT to NetworkError', async function() {
+            const timeoutError = new Error('Connection timed out');
+            timeoutError.code = 'ETIMEDOUT';
+            
+            const operation = sinon.stub().rejects(timeoutError);
+            
+            try {
+                await errors.withErrorHandling(operation, mockNode, msg);
+                should.fail('Should have thrown');
+            } catch (error) {
+                error.should.be.instanceof(errors.NetworkError);
+                error.message.should.containEql('Connection failed');
+            }
+        });
+        
+        it('should transform 429 status to RateLimitError', async function() {
+            const rateLimitError = new Error('Too Many Requests');
+            rateLimitError.statusCode = 429;
+            
+            const operation = sinon.stub().rejects(rateLimitError);
+            
+            try {
+                await errors.withErrorHandling(operation, mockNode, msg);
+                should.fail('Should have thrown');
+            } catch (error) {
+                error.should.be.instanceof(errors.RateLimitError);
+                error.message.should.equal('Rate limit exceeded');
             }
         });
         
