@@ -94,6 +94,8 @@ describe('Client Wrapper', function() {
     
     describe('Cleanup Functions', function() {
         it('should clean up stale clients with cleanupStaleClients function', function() {
+            const { __testHelpers } = require('../../lib/client-wrapper');
+            
             // Create multiple clients with different timestamps
             const config1 = { id: 'config1', getMealieClient: sinon.stub().resolves(mockClient) };
             const config2 = { id: 'config2', getMealieClient: sinon.stub().resolves(mockClient) };
@@ -113,16 +115,8 @@ describe('Client Wrapper', function() {
             clientWrapper._clientCache.has(config1.id).should.be.true();
             clientWrapper._clientCache.has(config2.id).should.be.true();
             
-            // Manually call cleanup function (simulates what setInterval would do)
-            const cleanupStaleClients = require('../../lib/client-wrapper').__test_cleanup || function() {
-                const now = Date.now();
-                for (const [key, value] of clientWrapper._clientCache.entries()) {
-                    if (now - value.lastUsed > 15 * 60 * 1000) {
-                        clientWrapper._clientCache.delete(key);
-                    }
-                }
-            };
-            cleanupStaleClients();
+            // Call the actual cleanup function
+            __testHelpers.cleanupStaleClients();
             
             // Verify stale client removed, fresh client remains
             clientWrapper._clientCache.has(config1.id).should.be.false();
@@ -130,6 +124,8 @@ describe('Client Wrapper', function() {
         });
         
         it('should properly cleanup interval and cache with cleanup function', function() {
+            const { __testHelpers } = require('../../lib/client-wrapper');
+            
             // Add some clients to cache
             clientWrapper._clientCache.set('test1', { client: mockClient, lastUsed: Date.now() });
             clientWrapper._clientCache.set('test2', { client: mockClient, lastUsed: Date.now() });
@@ -142,6 +138,9 @@ describe('Client Wrapper', function() {
             
             // Verify cache is cleared
             clientWrapper._clientCache.size.should.equal(0);
+            
+            // Also verify interval is cleared (this tests line 31 in client-wrapper.js)
+            should(__testHelpers.getCleanupInterval()).be.null();
         });
     });
     
