@@ -152,4 +152,286 @@ describe('Client Wrapper', function() {
             clientWrapper.clearClient(null);
         });
     });
+    
+    describe('Retry Logic', function() {
+        let mockNode;
+        
+        beforeEach(function() {
+            mockNode = {
+                error: sinon.stub(),
+                send: sinon.stub(),
+                log: sinon.stub()
+            };
+            // No need for additional fake timers - use the existing 'clock' from parent describe
+        });
+        
+        it('should work without errors (baseline)', async function() {
+            const operation = sinon.stub().resolves('success');
+            
+            const result = await clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            result.should.equal('success');
+            operation.callCount.should.equal(1);
+            mockNode.log.called.should.be.false();
+        });
+        
+        it('should retry on network errors (FetchError)', async function() {
+            const fetchError = new Error('Connection failed');
+            fetchError.name = 'FetchError';
+            
+            const operation = sinon.stub();
+            operation.onCall(0).rejects(fetchError);
+            operation.onCall(1).rejects(fetchError);
+            operation.onCall(2).resolves('success');
+            
+            // Start the operation
+            const promise = clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            // Fast-forward through retries
+            await clock.tickAsync(10); // First retry
+            await clock.tickAsync(20); // Second retry
+            
+            const result = await promise;
+            
+            result.should.equal('success');
+            operation.callCount.should.equal(3);
+            mockNode.log.calledWith('Retry attempt 2 of 3').should.be.true();
+            mockNode.log.calledWith('Retry attempt 3 of 3').should.be.true();
+        });
+        
+        it('should retry on network errors (ECONNREFUSED)', async function() {
+            const connError = new Error('Connection refused');
+            connError.code = 'ECONNREFUSED';
+            
+            const operation = sinon.stub();
+            operation.onCall(0).rejects(connError);
+            operation.onCall(1).resolves('success');
+            
+            const promise = clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            await clock.tickAsync(10); // First retry
+            
+            const result = await promise;
+            
+            result.should.equal('success');
+            operation.callCount.should.equal(2);
+            mockNode.log.calledWith('Retry attempt 2 of 3').should.be.true();
+        });
+        
+        it('should retry on network errors (ETIMEDOUT)', async function() {
+            const timeoutError = new Error('Connection timed out');
+            timeoutError.code = 'ETIMEDOUT';
+            
+            const operation = sinon.stub();
+            operation.onCall(0).rejects(timeoutError);
+            operation.onCall(1).resolves('success');
+            
+            const promise = clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            await clock.tickAsync(10); // First retry
+            
+            const result = await promise;
+            
+            result.should.equal('success');
+            operation.callCount.should.equal(2);
+            mockNode.log.calledWith('Retry attempt 2 of 3').should.be.true();
+        });
+        
+        it('should retry on rate limiting (429)', async function() {
+            const rateLimitError = new Error('Too Many Requests');
+            rateLimitError.statusCode = 429;
+            
+            const operation = sinon.stub();
+            operation.onCall(0).rejects(rateLimitError);
+            operation.onCall(1).resolves('success');
+            
+            const promise = clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            await clock.tickAsync(10); // First retry
+            
+            const result = await promise;
+            
+            result.should.equal('success');
+            operation.callCount.should.equal(2);
+            mockNode.log.calledWith('Retry attempt 2 of 3').should.be.true();
+        });
+        
+        it('should retry on server errors (5xx)', async function() {
+            const serverError = new Error('Internal Server Error');
+            serverError.statusCode = 500;
+            
+            const operation = sinon.stub();
+            operation.onCall(0).rejects(serverError);
+            operation.onCall(1).resolves('success');
+            
+            const promise = clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            await clock.tickAsync(10); // First retry
+            
+            const result = await promise;
+            
+            result.should.equal('success');
+            operation.callCount.should.equal(2);
+            mockNode.log.calledWith('Retry attempt 2 of 3').should.be.true();
+        });
+        
+        it('should not retry on authentication errors (401)', async function() {
+            const authError = new Error('Unauthorized');
+            authError.statusCode = 401;
+            
+            const operation = sinon.stub().rejects(authError);
+            
+            try {
+                await clientWrapper.executeWithClient(
+                    mockConfig,
+                    operation,
+                    mockNode,
+                    {}
+                );
+                should.fail('Should have thrown');
+            } catch (error) {
+                operation.callCount.should.equal(1);
+                mockNode.log.called.should.be.false();
+            }
+        });
+        
+        it('should not retry on authentication errors (403)', async function() {
+            const authError = new Error('Forbidden');
+            authError.statusCode = 403;
+            
+            const operation = sinon.stub().rejects(authError);
+            
+            try {
+                await clientWrapper.executeWithClient(
+                    mockConfig,
+                    operation,
+                    mockNode,
+                    {}
+                );
+                should.fail('Should have thrown');
+            } catch (error) {
+                operation.callCount.should.equal(1);
+                mockNode.log.called.should.be.false();
+            }
+        });
+        
+        it('should not retry on validation errors (400)', async function() {
+            const validationError = new Error('Bad Request');
+            validationError.statusCode = 400;
+            
+            const operation = sinon.stub().rejects(validationError);
+            
+            try {
+                await clientWrapper.executeWithClient(
+                    mockConfig,
+                    operation,
+                    mockNode,
+                    {}
+                );
+                should.fail('Should have thrown');
+            } catch (error) {
+                operation.callCount.should.equal(1);
+                mockNode.log.called.should.be.false();
+            }
+        });
+        
+        it('should respect maximum retry attempts', async function() {
+            const networkError = new Error('Connection failed');
+            networkError.name = 'FetchError';
+            
+            const operation = sinon.stub().rejects(networkError);
+            
+            const promise = clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            // Fast-forward through all retries
+            await clock.tickAsync(10); // First retry
+            await clock.tickAsync(20); // Second retry
+            
+            try {
+                await promise;
+                should.fail('Should have thrown');
+            } catch (error) {
+                operation.callCount.should.equal(3); // Max attempts
+                mockNode.log.calledWith('Retry attempt 2 of 3').should.be.true();
+                mockNode.log.calledWith('Retry attempt 3 of 3').should.be.true();
+            }
+        });
+        
+        it('should use exponential backoff delays', async function() {
+            const networkError = new Error('Connection failed');
+            networkError.name = 'FetchError';
+            
+            const operation = sinon.stub();
+            operation.onCall(0).rejects(networkError);
+            operation.onCall(1).rejects(networkError);
+            operation.onCall(2).resolves('success');
+            
+            const promise = clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            // Verify exponential backoff: 10ms, 20ms delays
+            await clock.tickAsync(10); // First retry after 10ms
+            operation.callCount.should.equal(2);
+            
+            await clock.tickAsync(20); // Second retry after 20ms
+            operation.callCount.should.equal(3);
+            
+            const result = await promise;
+            result.should.equal('success');
+        });
+        
+        it('should not log on first attempt', async function() {
+            const operation = sinon.stub().resolves('success');
+            
+            const result = await clientWrapper.executeWithClient(
+                mockConfig,
+                operation,
+                mockNode,
+                {}
+            );
+            
+            result.should.equal('success');
+            operation.callCount.should.equal(1);
+            mockNode.log.called.should.be.false();
+        });
+    });
 });
