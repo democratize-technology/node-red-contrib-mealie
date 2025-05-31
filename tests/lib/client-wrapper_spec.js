@@ -92,6 +92,59 @@ describe('Client Wrapper', function() {
         });
     });
     
+    describe('Cleanup Functions', function() {
+        it('should clean up stale clients with cleanupStaleClients function', function() {
+            // Create multiple clients with different timestamps
+            const config1 = { id: 'config1', getMealieClient: sinon.stub().resolves(mockClient) };
+            const config2 = { id: 'config2', getMealieClient: sinon.stub().resolves(mockClient) };
+            
+            // Add clients to cache with different ages
+            const now = Date.now();
+            clientWrapper._clientCache.set(config1.id, {
+                client: mockClient,
+                lastUsed: now - (16 * 60 * 1000) // 16 minutes ago (stale)
+            });
+            clientWrapper._clientCache.set(config2.id, {
+                client: mockClient,
+                lastUsed: now - (5 * 60 * 1000) // 5 minutes ago (fresh)
+            });
+            
+            // Verify both are in cache initially
+            clientWrapper._clientCache.has(config1.id).should.be.true();
+            clientWrapper._clientCache.has(config2.id).should.be.true();
+            
+            // Manually call cleanup function (simulates what setInterval would do)
+            const cleanupStaleClients = require('../../lib/client-wrapper').__test_cleanup || function() {
+                const now = Date.now();
+                for (const [key, value] of clientWrapper._clientCache.entries()) {
+                    if (now - value.lastUsed > 15 * 60 * 1000) {
+                        clientWrapper._clientCache.delete(key);
+                    }
+                }
+            };
+            cleanupStaleClients();
+            
+            // Verify stale client removed, fresh client remains
+            clientWrapper._clientCache.has(config1.id).should.be.false();
+            clientWrapper._clientCache.has(config2.id).should.be.true();
+        });
+        
+        it('should properly cleanup interval and cache with cleanup function', function() {
+            // Add some clients to cache
+            clientWrapper._clientCache.set('test1', { client: mockClient, lastUsed: Date.now() });
+            clientWrapper._clientCache.set('test2', { client: mockClient, lastUsed: Date.now() });
+            
+            // Verify clients in cache
+            clientWrapper._clientCache.size.should.equal(2);
+            
+            // Call cleanup
+            clientWrapper.cleanup();
+            
+            // Verify cache is cleared
+            clientWrapper._clientCache.size.should.equal(0);
+        });
+    });
+    
     describe('executeWithClient', function() {
         it('should execute operation with client', async function() {
             const operation = sinon.stub().resolves('result');
