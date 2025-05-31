@@ -6,7 +6,7 @@
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
 const { validateOperation, validateId, processInputData } = require('../../lib/validation');
-const { setSuccessStatus, setErrorStatus } = require('../../lib/node-status');
+const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../lib/node-status');
 
 module.exports = function(RED) {
     function MealiePlanningNode(config) {
@@ -22,6 +22,7 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(this.server);
         
         const node = this;
+        let statusTimer;
         
         // Handle input message
         node.on('input', async function(msg, send, done) {
@@ -42,18 +43,18 @@ module.exports = function(RED) {
                 let result;
                 
                 switch (validOperation) {
-                    case 'get':
-                        result = await handleGetOperation(node, msg);
-                        break;
-                    case 'create':
-                        result = await handleCreateOperation(node, msg);
-                        break;
-                    case 'update':
-                        result = await handleUpdateOperation(node, msg);
-                        break;
-                    case 'delete':
-                        result = await handleDeleteOperation(node, msg);
-                        break;
+                case 'get':
+                    result = await handleGetOperation(node, msg);
+                    break;
+                case 'create':
+                    result = await handleCreateOperation(node, msg);
+                    break;
+                case 'update':
+                    result = await handleUpdateOperation(node, msg);
+                    break;
+                case 'delete':
+                    result = await handleDeleteOperation(node, msg);
+                    break;
                 }
                 
                 // Send successful result
@@ -64,7 +65,8 @@ module.exports = function(RED) {
                 };
                 
                 // Set node status to show success
-                setSuccessStatus(node, validOperation);
+                clearStatusTimer(statusTimer);
+                statusTimer = setSuccessStatus(node, validOperation);
                 
                 // Use single output pattern
                 send(msg);
@@ -82,7 +84,8 @@ module.exports = function(RED) {
                 };
                 
                 // Set node status to show error
-                setErrorStatus(node, error.message);
+                clearStatusTimer(statusTimer);
+                statusTimer = setErrorStatus(node, error.message);
                 
                 // Log error to runtime
                 node.error(error.message, msg);
@@ -183,6 +186,11 @@ module.exports = function(RED) {
                 msg
             );
         }
+        
+        // Clean up timer on node close
+        node.on('close', function() {
+            clearStatusTimer(statusTimer);
+        });
     }
     
     RED.nodes.registerType('mealie-planning', MealiePlanningNode);

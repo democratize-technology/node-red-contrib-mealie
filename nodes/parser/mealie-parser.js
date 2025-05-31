@@ -5,7 +5,7 @@
 
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
-const { setSuccessStatus, setErrorStatus } = require('../../lib/node-status');
+const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../lib/node-status');
 
 module.exports = function(RED) {
     function MealieParserNode(config) {
@@ -20,6 +20,7 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(this.server);
         
         const node = this;
+        let statusTimer;
         
         // Handle input message
         node.on('input', async function(msg, send, done) {
@@ -39,14 +40,14 @@ module.exports = function(RED) {
                 let result;
                 
                 switch (operation) {
-                    case 'parseUrl':
-                        result = await handleParseUrlOperation(node, msg);
-                        break;
-                    case 'parseText':
-                        result = await handleParseTextOperation(node, msg);
-                        break;
-                    default:
-                        throw new ValidationError(`Unsupported operation: ${operation}`);
+                case 'parseUrl':
+                    result = await handleParseUrlOperation(node, msg);
+                    break;
+                case 'parseText':
+                    result = await handleParseTextOperation(node, msg);
+                    break;
+                default:
+                    throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
                 
                 // Send successful result
@@ -57,7 +58,8 @@ module.exports = function(RED) {
                 };
                 
                 // Set node status to show success
-                setSuccessStatus(node, operation);
+                clearStatusTimer(statusTimer);
+                statusTimer = setSuccessStatus(node, operation);
                 
                 // Use single output pattern
                 send(msg);
@@ -75,7 +77,8 @@ module.exports = function(RED) {
                 };
                 
                 // Set node status to show error
-                setErrorStatus(node, error.message);
+                clearStatusTimer(statusTimer);
+                statusTimer = setErrorStatus(node, error.message);
                 
                 // Log error to runtime
                 node.error(error.message, msg);
@@ -121,6 +124,11 @@ module.exports = function(RED) {
                 msg
             );
         }
+        
+        // Clean up timer on node close
+        node.on('close', function() {
+            clearStatusTimer(statusTimer);
+        });
     }
     
     RED.nodes.registerType('mealie-parser', MealieParserNode);

@@ -6,7 +6,7 @@
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
 const { validateOperation, validateSlug, validateId, processInputData } = require('../../lib/validation');
-const { setSuccessStatus, setErrorStatus } = require('../../lib/node-status');
+const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../lib/node-status');
 
 module.exports = function(RED) {
     function MealieRecipeNode(config) {
@@ -21,6 +21,9 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(this.server);
         
         const node = this;
+        
+        // Track status timer for cleanup
+        let statusTimer;
         
         // Handle input message
         node.on('input', async function(msg, send, done) {
@@ -41,27 +44,27 @@ module.exports = function(RED) {
                 let result;
                 
                 switch (validOperation) {
-                    case 'get':
-                        result = await handleGetOperation(node, msg);
-                        break;
-                    case 'search':
-                        result = await handleSearchOperation(node, msg);
-                        break;
-                    case 'create':
-                        result = await handleCreateOperation(node, msg);
-                        break;
-                    case 'update':
-                        result = await handleUpdateOperation(node, msg);
-                        break;
-                    case 'delete':
-                        result = await handleDeleteOperation(node, msg);
-                        break;
-                    case 'image':
-                        result = await handleImageOperation(node, msg);
-                        break;
-                    case 'asset':
-                        result = await handleAssetOperation(node, msg);
-                        break;
+                case 'get':
+                    result = await handleGetOperation(node, msg);
+                    break;
+                case 'search':
+                    result = await handleSearchOperation(node, msg);
+                    break;
+                case 'create':
+                    result = await handleCreateOperation(node, msg);
+                    break;
+                case 'update':
+                    result = await handleUpdateOperation(node, msg);
+                    break;
+                case 'delete':
+                    result = await handleDeleteOperation(node, msg);
+                    break;
+                case 'image':
+                    result = await handleImageOperation(node, msg);
+                    break;
+                case 'asset':
+                    result = await handleAssetOperation(node, msg);
+                    break;
                 }
                 
                 // Send successful result
@@ -71,8 +74,9 @@ module.exports = function(RED) {
                     data: result
                 };
                 
-                // Set node status to show success
-                setSuccessStatus(node, validOperation);
+                // Clear any existing status timer and set new success status
+                clearStatusTimer(statusTimer);
+                statusTimer = setSuccessStatus(node, validOperation);
                 
                 // Use single output pattern
                 send(msg);
@@ -89,8 +93,9 @@ module.exports = function(RED) {
                     }
                 };
                 
-                // Set node status to show error
-                setErrorStatus(node, error.message);
+                // Clear any existing status timer and set new error status
+                clearStatusTimer(statusTimer);
+                statusTimer = setErrorStatus(node, error.message);
                 
                 // Log error to runtime
                 node.error(error.message, msg);
@@ -193,13 +198,13 @@ module.exports = function(RED) {
                 node.config,
                 async (client) => {
                     switch (validImageAction) {
-                        case 'get':
-                            return await client.recipes.getRecipeImage(validSlug);
-                        case 'upload':
-                            if (!imageData) {
-                                throw new ValidationError('No image data provided for image upload action');
-                            }
-                            return await client.recipes.uploadRecipeImage(validSlug, imageData);
+                    case 'get':
+                        return await client.recipes.getRecipeImage(validSlug);
+                    case 'upload':
+                        if (!imageData) {
+                            throw new ValidationError('No image data provided for image upload action');
+                        }
+                        return await client.recipes.uploadRecipeImage(validSlug, imageData);
                     }
                 },
                 node,
@@ -221,25 +226,32 @@ module.exports = function(RED) {
                 node.config,
                 async (client) => {
                     switch (validAssetAction) {
-                        case 'list':
-                            return await client.recipes.getRecipeAssets(validSlug);
-                        case 'get':
-                            const validAssetId = validateId(assetId, true, 'asset ID for get asset action');
-                            return await client.recipes.getRecipeAsset(validSlug, validAssetId);
-                        case 'upload':
-                            if (!assetData) {
-                                throw new ValidationError('No asset data provided for upload asset action');
-                            }
-                            return await client.recipes.uploadRecipeAsset(validSlug, assetData);
-                        case 'delete':
-                            const validDeleteAssetId = validateId(assetId, true, 'asset ID for delete asset action');
-                            return await client.recipes.deleteRecipeAsset(validSlug, validDeleteAssetId);
+                    case 'list':
+                        return await client.recipes.getRecipeAssets(validSlug);
+                    case 'get': {
+                        const validAssetId = validateId(assetId, true, 'asset ID for get asset action');
+                        return await client.recipes.getRecipeAsset(validSlug, validAssetId);
+                    }
+                    case 'upload':
+                        if (!assetData) {
+                            throw new ValidationError('No asset data provided for upload asset action');
+                        }
+                        return await client.recipes.uploadRecipeAsset(validSlug, assetData);
+                    case 'delete': {
+                        const validDeleteAssetId = validateId(assetId, true, 'asset ID for delete asset action');
+                        return await client.recipes.deleteRecipeAsset(validSlug, validDeleteAssetId);
+                    }
                     }
                 },
                 node,
                 msg
             );
         }
+        
+        // Clean up status timer on node close
+        node.on('close', function() {
+            clearStatusTimer(statusTimer);
+        });
     }
     
     RED.nodes.registerType('mealie-recipe', MealieRecipeNode);
