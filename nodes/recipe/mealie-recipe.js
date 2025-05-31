@@ -6,6 +6,7 @@
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
 const { validateOperation, validateSlug, validateId, processInputData } = require('../../lib/validation');
+const { setSuccessStatus, setErrorStatus } = require('../../lib/node-status');
 
 module.exports = function(RED) {
     function MealieRecipeNode(config) {
@@ -70,6 +71,9 @@ module.exports = function(RED) {
                     data: result
                 };
                 
+                // Set node status to show success
+                setSuccessStatus(node, validOperation);
+                
                 // Use single output pattern
                 send(msg);
                 done();
@@ -86,7 +90,7 @@ module.exports = function(RED) {
                 };
                 
                 // Set node status to show error
-                node.status({fill: "red", shape: "dot", text: error.message});
+                setErrorStatus(node, error.message);
                 
                 // Log error to runtime
                 node.error(error.message, msg);

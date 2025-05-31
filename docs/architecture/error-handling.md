@@ -159,6 +159,37 @@ All errors are output in a standardized format:
 }
 ```
 
+## Node Status Display
+
+All Mealie nodes provide consistent visual status feedback:
+
+### Success Status
+- **Color**: Green dot
+- **Message**: `{operation} success` (e.g., "create success", "get success")
+- **Duration**: Automatically clears after 5 seconds
+
+### Error Status
+- **Color**: Red dot
+- **Message**: Error message text
+- **Duration**: Automatically clears after 5 seconds
+
+### Status Utilities
+
+The package provides utilities for consistent status handling across all nodes:
+
+```javascript
+const { setSuccessStatus, setErrorStatus, clearStatus } = require('../../lib/node-status');
+
+// Set success status with automatic clearing
+setSuccessStatus(node, 'create');
+
+// Set error status with automatic clearing
+setErrorStatus(node, 'Connection failed');
+
+// Clear status immediately
+clearStatus(node);
+```
+
 ## Error Handling Utilities
 
 The package provides several utilities to standardize error handling:
