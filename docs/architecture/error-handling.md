@@ -115,7 +115,7 @@ Starting from version 0.2.1, the package includes intelligent retry logic for tr
 
 ### 3. Error Transformation
 
-API errors and other exceptions are transformed into the appropriate MealieError subtype:
+API errors and other exceptions are transformed into the appropriate MealieError subtype using the `transformError` utility function:
 
 - HTTP 401/403 errors → AuthenticationError
 - HTTP 400 errors → ValidationError
@@ -123,6 +123,8 @@ API errors and other exceptions are transformed into the appropriate MealieError
 - HTTP 5xx errors → MealieError (with statusCode preserved for retry logic)
 - Network exceptions → NetworkError
 - Other exceptions → MealieError
+
+The `transformError` function provides a single source of truth for error transformation logic, ensuring consistent behavior across all code paths (retry-enabled and retry-disabled).
 
 ### 4. Error Handling in Nodes
 
@@ -203,6 +205,14 @@ const result = await withErrorHandling(
   async () => await client.recipes.getRecipe(slug),
   'Failed to retrieve recipe'
 );
+```
+
+### transformError
+
+Transforms various error types into appropriate MealieError subclasses:
+
+```javascript
+const transformedError = transformError(originalError);
 ```
 
 ### handleError
