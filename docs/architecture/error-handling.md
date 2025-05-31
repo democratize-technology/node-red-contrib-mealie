@@ -109,8 +109,9 @@ Starting from version 0.2.1, the package includes intelligent retry logic for tr
 
 **Retry Configuration:**
 - Maximum attempts: 3 total (initial attempt + 2 retries)
-- Exponential backoff: 1s, 2s, 4s intervals (with jitter)
+- Exponential backoff: 1s, 2s, 4s intervals (with 30% jitter)
 - Fast test mode: 10ms, 20ms, 40ms intervals during testing
+- Environment variable opt-out: Set `MEALIE_RETRY_ENABLED=false` to disable retries
 
 ### 3. Error Transformation
 

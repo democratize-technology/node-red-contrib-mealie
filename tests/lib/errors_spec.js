@@ -103,7 +103,6 @@ describe('Error Utilities', function() {
     
     describe('withErrorHandling', function() {
         let mockNode;
-        let msg;
         
         beforeEach(function() {
             mockNode = {
@@ -111,12 +110,11 @@ describe('Error Utilities', function() {
                 send: sinon.stub(),
                 log: sinon.stub()
             };
-            msg = {};
         });
         
         it('should execute operation successfully', async function() {
             const operation = sinon.stub().resolves('success');
-            const result = await errors.withErrorHandling(operation, mockNode, msg);
+            const result = await errors.withErrorHandling(operation, mockNode);
             result.should.equal('success');
         });
         
@@ -127,7 +125,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(fetchError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.NetworkError);
@@ -141,7 +139,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(connError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.NetworkError);
@@ -155,7 +153,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(timeoutError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.NetworkError);
@@ -169,7 +167,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(rateLimitError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.RateLimitError);
@@ -183,7 +181,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(authError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.AuthenticationError);
@@ -197,7 +195,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(authError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.AuthenticationError);
@@ -211,7 +209,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(validationError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.ValidationError);
@@ -224,7 +222,7 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(unknownError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.be.instanceof(errors.MealieError);
@@ -238,10 +236,45 @@ describe('Error Utilities', function() {
             const operation = sinon.stub().rejects(mealieError);
             
             try {
-                await errors.withErrorHandling(operation, mockNode, msg);
+                await errors.withErrorHandling(operation, mockNode);
                 should.fail('Should have thrown');
             } catch (error) {
                 error.should.equal(mealieError);
+            }
+        });
+        
+        it('should skip retries when MEALIE_RETRY_ENABLED=false', async function() {
+            // Temporarily disable retries
+            const originalEnv = process.env.MEALIE_RETRY_ENABLED;
+            process.env.MEALIE_RETRY_ENABLED = 'false';
+            
+            try {
+                // Reload the errors module to pick up new env variable
+                delete require.cache[require.resolve('../../lib/errors')];
+                const errorsWithRetryDisabled = require('../../lib/errors');
+                
+                const networkError = new Error('Connection failed');
+                networkError.code = 'ECONNREFUSED';
+                
+                const operation = sinon.stub().rejects(networkError);
+                
+                try {
+                    await errorsWithRetryDisabled.withErrorHandling(operation, mockNode);
+                    should.fail('Should have thrown');
+                } catch (error) {
+                    error.should.be.instanceof(errorsWithRetryDisabled.NetworkError);
+                    operation.calledOnce.should.be.true(); // No retries
+                    mockNode.log.called.should.be.false(); // No retry logs
+                }
+            } finally {
+                // Restore original env and reload module
+                if (originalEnv === undefined) {
+                    delete process.env.MEALIE_RETRY_ENABLED;
+                } else {
+                    process.env.MEALIE_RETRY_ENABLED = originalEnv;
+                }
+                delete require.cache[require.resolve('../../lib/errors')];
+                require('../../lib/errors');
             }
         });
     });
