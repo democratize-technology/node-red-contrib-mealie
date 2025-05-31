@@ -50,12 +50,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeremy/node-red-contrib-mealie"
+    "url": "https://github.com/democratize-technology/node-red-contrib-mealie"
   },
   "bugs": {
-    "url": "https://github.com/jeremy/node-red-contrib-mealie/issues"
+    "url": "https://github.com/democratize-technology/node-red-contrib-mealie/issues"
   },
-  "homepage": "https://github.com/jeremy/node-red-contrib-mealie#readme",
+  "homepage": "https://github.com/democratize-technology/node-red-contrib-mealie#readme",
   "engines": {
     "node": ">=20.0.0"
   }
