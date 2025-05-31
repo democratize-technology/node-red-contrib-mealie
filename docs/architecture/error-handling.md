@@ -11,7 +11,8 @@ MealieError (base error class)
 ├── NetworkError
 ├── AuthenticationError
 ├── ValidationError
-└── ConfigurationError
+├── ConfigurationError
+└── RateLimitError
 ```
 
 ### MealieError
@@ -52,6 +53,13 @@ Represents issues with the node or server configuration:
 - Invalid server URL
 - Misconfigured node settings
 
+### RateLimitError
+
+Represents rate limiting issues from the Mealie server:
+- HTTP 429 "Too Many Requests" responses
+- API rate limit exceeded
+- Server temporarily refusing requests
+
 ## Error Codes
 
 Each error includes a specific error code that identifies the exact error condition:
@@ -68,6 +76,7 @@ Each error includes a specific error code that identifies the exact error condit
 | `INVALID_OPERATION`     | ValidationError      | Operation is not supported                   |
 | `MISSING_CONFIG`        | ConfigurationError   | Server configuration is missing              |
 | `INVALID_CONFIG`        | ConfigurationError   | Server configuration is invalid              |
+| `RATE_LIMIT_ERROR`      | RateLimitError       | Server is rate limiting requests             |
 
 ## Error Handling Strategy
 
@@ -84,16 +93,37 @@ const error = new ValidationError(
 );
 ```
 
-### 2. Error Transformation
+### 2. Retry Logic
+
+Starting from version 0.2.1, the package includes intelligent retry logic for transient failures:
+
+**Retryable Errors:**
+- Network errors (connection failures, timeouts, DNS issues)
+- Rate limiting errors (HTTP 429)
+- Server errors (HTTP 5xx status codes)
+
+**Non-Retryable Errors:**
+- Authentication errors (HTTP 401/403)
+- Validation errors (HTTP 400)
+- Other client errors (HTTP 4xx)
+
+**Retry Configuration:**
+- Maximum attempts: 3 total (initial attempt + 2 retries)
+- Exponential backoff: 1s, 2s, 4s intervals (with jitter)
+- Fast test mode: 10ms, 20ms, 40ms intervals during testing
+
+### 3. Error Transformation
 
 API errors and other exceptions are transformed into the appropriate MealieError subtype:
 
 - HTTP 401/403 errors → AuthenticationError
 - HTTP 400 errors → ValidationError
+- HTTP 429 errors → RateLimitError
+- HTTP 5xx errors → MealieError (with statusCode preserved for retry logic)
 - Network exceptions → NetworkError
 - Other exceptions → MealieError
 
-### 3. Error Handling in Nodes
+### 4. Error Handling in Nodes
 
 Each node implements a consistent error handling pattern:
 
@@ -110,7 +140,7 @@ The `handleError` utility:
 2. Transforms the error if needed
 3. Sends the standardized error object to the error output
 
-### 4. Error Output Format
+### 5. Error Output Format
 
 All errors are output in a standardized format:
 
@@ -151,6 +181,23 @@ Processes errors and sends them to the appropriate node output:
 handleError(node, error, msg);
 ```
 
+## Migration Notes
+
+### Version 0.2.1 Breaking Changes
+
+**⚠️ Important Behavior Changes:**
+
+- **Increased Operation Duration**: Operations that previously failed immediately may now take up to ~45 seconds to fail (3 attempts with exponential backoff)
+- **Retry Behavior**: Network errors, rate limiting, and server errors now automatically retry
+- **New Error Type**: Added `RateLimitError` for HTTP 429 responses
+
+**Migration Considerations:**
+
+1. **Flow Timing**: Flows may appear to "hang" during retry attempts. This is normal behavior.
+2. **Error Handling**: Add handling for the new `RateLimitError` type in error handling logic.
+3. **Testing**: Update integration tests to account for retry delays.
+4. **User Experience**: Consider adding progress indicators for operations that may retry.
+
 ## Best Practices for Flow Developers
 
 When working with node-red-contrib-mealie nodes:
@@ -160,6 +207,7 @@ When working with node-red-contrib-mealie nodes:
 3. **Handle Specific Errors**: Use switch nodes to handle different error codes appropriately
 4. **Provide Complete Parameters**: Ensure all required parameters for an operation are provided
 5. **Validate Inputs**: Pre-validate complex inputs before sending to Mealie nodes
+6. **Account for Retries**: Be patient with operations that may retry on transient failures
 
 ## Example Error Handling Flow
 
