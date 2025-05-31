@@ -194,7 +194,7 @@ describe('Validation Utilities', function() {
                 recipeIngredient: ['ingredient 1', 'ingredient 2'],
                 tags: ['dinner', 'easy']
             };
-            
+
             const result = validateRecipeData(recipeData);
             expect(result.name).to.equal('Test Recipe');
             expect(result.description).to.equal('A test recipe');

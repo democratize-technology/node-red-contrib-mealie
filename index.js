@@ -1,6 +1,6 @@
 /**
  * Node-RED Mealie Integration
- * 
+ *
  * This module provides Node-RED nodes for interacting with the Mealie API.
  */
 

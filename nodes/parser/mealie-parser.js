@@ -10,7 +10,7 @@ const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../li
 module.exports = function(RED) {
     function MealieParserNode(config) {
         RED.nodes.createNode(this, config);
-        
+
         // Copy config properties to node
         this.name = config.name;
         this.server = config.server;
@@ -18,27 +18,27 @@ module.exports = function(RED) {
         this.url = config.url;
         this.ingredientText = config.ingredientText;
         this.config = RED.nodes.getNode(this.server);
-        
+
         const node = this;
         let statusTimer;
-        
+
         // Handle input message
         node.on('input', async function(msg, send, done) {
             // Ensure backward compatibility with Node-RED < 1.0
             send = send || function() { node.send.apply(node, arguments); };
             done = done || function(error) { if (error) { node.error(error, msg); } };
-            
+
             try {
                 // Determine operation (from config or payload)
                 const operation = msg.payload?.operation || node.operation;
-                
+
                 if (!operation) {
                     throw new ValidationError('No operation specified. Set in node config or msg.payload.operation');
                 }
-                
+
                 // Execute the appropriate operation
                 let result;
-                
+
                 switch (operation) {
                 case 'parseUrl':
                     result = await handleParseUrlOperation(node, msg);
@@ -49,18 +49,18 @@ module.exports = function(RED) {
                 default:
                     throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
-                
+
                 // Send successful result
                 msg.payload = {
                     success: true,
                     operation: operation,
                     data: result
                 };
-                
+
                 // Set node status to show success
                 clearStatusTimer(statusTimer);
                 statusTimer = setSuccessStatus(node, operation);
-                
+
                 // Use single output pattern
                 send(msg);
                 done();
@@ -75,28 +75,28 @@ module.exports = function(RED) {
                         details: error.details || null
                     }
                 };
-                
+
                 // Set node status to show error
                 clearStatusTimer(statusTimer);
                 statusTimer = setErrorStatus(node, error.message);
-                
+
                 // Log error to runtime
                 node.error(error.message, msg);
-                
+
                 // Send error message on the same output
                 send(msg);
                 done(error);
             }
         });
-        
+
         // Helper for parseUrl operation
         async function handleParseUrlOperation(node, msg) {
             const url = msg.payload?.url || node.url;
-            
+
             if (!url) {
                 throw new ValidationError('No URL provided for parseUrl operation. Specify in node config or msg.payload.url');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -106,15 +106,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for parseText operation
         async function handleParseTextOperation(node, msg) {
             const ingredientText = msg.payload?.ingredientText || node.ingredientText;
-            
+
             if (!ingredientText) {
                 throw new ValidationError('No ingredient text provided for parseText operation. Specify in node config or msg.payload.ingredientText');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -124,12 +124,12 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Clean up timer on node close
         node.on('close', function() {
             clearStatusTimer(statusTimer);
         });
     }
-    
+
     RED.nodes.registerType('mealie-parser', MealieParserNode);
 };

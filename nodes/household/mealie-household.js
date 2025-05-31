@@ -10,7 +10,7 @@ const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../li
 module.exports = function(RED) {
     function MealieHouseholdNode(config) {
         RED.nodes.createNode(this, config);
-        
+
         // Copy config properties to node
         this.name = config.name;
         this.server = config.server;
@@ -18,27 +18,27 @@ module.exports = function(RED) {
         this.householdId = config.householdId;
         this.preferencesData = config.preferencesData;
         this.config = RED.nodes.getNode(this.server);
-        
+
         const node = this;
         let statusTimer;
-        
+
         // Handle input message
         node.on('input', async function(msg, send, done) {
             // Ensure backward compatibility with Node-RED < 1.0
             send = send || function() { node.send.apply(node, arguments); };
             done = done || function(error) { if (error) { node.error(error, msg); } };
-            
+
             try {
                 // Determine operation (from config or payload)
                 const operation = msg.payload?.operation || node.operation;
-                
+
                 if (!operation) {
                     throw new ValidationError('No operation specified. Set in node config or msg.payload.operation');
                 }
-                
+
                 // Execute the appropriate operation
                 let result;
-                
+
                 switch (operation) {
                 case 'get':
                     result = await handleGetOperation(node, msg);
@@ -55,18 +55,18 @@ module.exports = function(RED) {
                 default:
                     throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
-                
+
                 // Send successful result
                 msg.payload = {
                     success: true,
                     operation: operation,
                     data: result
                 };
-                
+
                 // Set node status to show success
                 clearStatusTimer(statusTimer);
                 statusTimer = setSuccessStatus(node, operation);
-                
+
                 // Send to the output
                 send(msg);
                 done();
@@ -81,24 +81,24 @@ module.exports = function(RED) {
                         details: error.details || null
                     }
                 };
-                
+
                 // Set node status to show error
                 clearStatusTimer(statusTimer);
                 statusTimer = setErrorStatus(node, error.message);
-                
+
                 // Log error to runtime
                 node.error(error.message, msg);
-                
+
                 // Send error message on the same output
                 send(msg);
                 done(error);
             }
         });
-        
+
         // Helper for get operation
         async function handleGetOperation(node, msg) {
             const householdId = msg.payload?.householdId || node.householdId;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -113,15 +113,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for getMembers operation
         async function handleGetMembersOperation(node, msg) {
             const householdId = msg.payload?.householdId || node.householdId;
-            
+
             if (!householdId) {
                 throw new ValidationError('No household ID provided for getMembers operation. Specify in node config or msg.payload.householdId');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -131,15 +131,15 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for getPreferences operation
         async function handleGetPreferencesOperation(node, msg) {
             const householdId = msg.payload?.householdId || node.householdId;
-            
+
             if (!householdId) {
                 throw new ValidationError('No household ID provided for getPreferences operation. Specify in node config or msg.payload.householdId');
             }
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -149,25 +149,25 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Helper for updatePreferences operation
         async function handleUpdatePreferencesOperation(node, msg) {
             const householdId = msg.payload?.householdId || node.householdId;
             const preferencesData = msg.payload?.preferencesData || node.preferencesData;
-            
+
             if (!householdId) {
                 throw new ValidationError('No household ID provided for updatePreferences operation. Specify in node config or msg.payload.householdId');
             }
-            
+
             if (!preferencesData) {
                 throw new ValidationError('No preferences data provided for updatePreferences operation. Specify in node config or msg.payload.preferencesData');
             }
-            
+
             // Parse the preferences data if it's a string
-            const parsedPreferencesData = typeof preferencesData === 'string' 
-                ? JSON.parse(preferencesData) 
+            const parsedPreferencesData = typeof preferencesData === 'string'
+                ? JSON.parse(preferencesData)
                 : preferencesData;
-            
+
             return await executeWithClient(
                 node.config,
                 async (client) => {
@@ -177,12 +177,12 @@ module.exports = function(RED) {
                 msg
             );
         }
-        
+
         // Clean up timer on node close
         node.on('close', function() {
             clearStatusTimer(statusTimer);
         });
     }
-    
+
     RED.nodes.registerType('mealie-household', MealieHouseholdNode);
 };
