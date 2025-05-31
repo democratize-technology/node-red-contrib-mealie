@@ -9,6 +9,7 @@ The package uses a hierarchy of error types to categorize different error condit
 ```
 MealieError (base error class)
 ├── NetworkError
+├── RateLimitError
 ├── AuthenticationError
 ├── ValidationError
 └── ConfigurationError
@@ -27,6 +28,12 @@ Represents failures in network connectivity or communication with the Mealie ser
 - Connection failures
 - Timeouts
 - DNS resolution issues
+
+### RateLimitError
+
+Represents rate limiting responses from the Mealie server:
+- HTTP 429 (Too Many Requests) responses
+- API quota exceeded errors
 
 ### AuthenticationError
 
@@ -60,6 +67,7 @@ Each error includes a specific error code that identifies the exact error condit
 |-------------------------|--------------------- |----------------------------------------------|
 | `UNKNOWN_ERROR`         | MealieError          | Unclassified error                           |
 | `NETWORK_ERROR`         | NetworkError         | Failed to connect to the server              |
+| `RATE_LIMIT_ERROR`      | RateLimitError       | API rate limit exceeded                      |
 | `TIMEOUT_ERROR`         | NetworkError         | Request timed out                            |
 | `INVALID_CREDENTIALS`   | AuthenticationError  | API key is invalid or missing                |
 | `PERMISSION_DENIED`     | AuthenticationError  | Insufficient permissions for operation       |
@@ -89,6 +97,7 @@ const error = new ValidationError(
 API errors and other exceptions are transformed into the appropriate MealieError subtype:
 
 - HTTP 401/403 errors → AuthenticationError
+- HTTP 429 errors → RateLimitError
 - HTTP 400 errors → ValidationError
 - Network exceptions → NetworkError
 - Other exceptions → MealieError
@@ -142,6 +151,45 @@ const result = await withErrorHandling(
   'Failed to retrieve recipe'
 );
 ```
+
+## Retry Logic
+
+The package implements intelligent retry logic for transient failures using the [cockatiel](https://github.com/connor4312/cockatiel) library. Operations are automatically retried in the following scenarios:
+
+### Retryable Conditions
+
+- **Network Errors**: Connection failures, timeouts, DNS resolution issues
+- **Rate Limiting**: HTTP 429 (Too Many Requests) responses  
+- **Server Errors**: HTTP 5xx responses indicating temporary server issues
+
+### Retry Configuration
+
+The retry logic uses exponential backoff with the following settings:
+
+- **Maximum Attempts**: 3 retries per operation
+- **Initial Delay**: 1 second
+- **Maximum Delay**: 30 seconds
+- **Backoff Strategy**: Exponential with factor of 2
+- **Jitter**: Enabled to prevent thundering herd
+
+### Non-Retryable Conditions
+
+The following errors are **not** retried to avoid unnecessary delays:
+
+- **Authentication Errors**: HTTP 401/403 responses
+- **Validation Errors**: HTTP 400 responses  
+- **Client Configuration Errors**: Misconfigured nodes or servers
+
+### Retry Behavior
+
+When a retry is attempted:
+
+1. The node logs the retry attempt number
+2. Exponential backoff delay is applied
+3. The operation is re-executed with a fresh client connection
+4. If all retries are exhausted, the final error is propagated
+
+This approach significantly improves reliability for users with unstable network connections or when the Mealie server is experiencing temporary issues.
 
 ### handleError
 
