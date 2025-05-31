@@ -5,6 +5,7 @@
 
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
+const { validateOperation, validateId, processInputData } = require('../../lib/validation');
 
 module.exports = function(RED) {
     function MealieShoppingNode(config) {
@@ -33,14 +34,15 @@ module.exports = function(RED) {
                 // Determine operation (from config or payload)
                 const operation = msg.payload?.operation || node.operation;
                 
-                if (!operation) {
-                    throw new ValidationError('No operation specified. Set in node config or msg.payload.operation');
-                }
+                // Validate operation
+                const validOperation = validateOperation(operation, [
+                    'getList', 'createList', 'updateList', 'deleteList', 'getItems', 'createItem', 'addRecipe'
+                ]);
                 
                 // Execute the appropriate operation
                 let result;
                 
-                switch (operation) {
+                switch (validOperation) {
                     case 'getList':
                         result = await handleGetListOperation(node, msg);
                         break;
@@ -62,19 +64,17 @@ module.exports = function(RED) {
                     case 'addRecipe':
                         result = await handleAddRecipeOperation(node, msg);
                         break;
-                    default:
-                        throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
                 
                 // Send successful result
                 msg.payload = {
                     success: true,
-                    operation: operation,
+                    operation: validOperation,
                     data: result
                 };
                 
                 // Set node status to show success
-                node.status({fill: "green", shape: "dot", text: operation + " success"});
+                node.status({fill: "green", shape: "dot", text: validOperation + " success"});
                 
                 // Use single output pattern
                 send(msg);
@@ -111,7 +111,8 @@ module.exports = function(RED) {
                 node.config,
                 async (client) => {
                     if (shoppingListId) {
-                        return await client.shoppingLists.getShoppingList(shoppingListId);
+                        const validShoppingListId = validateId(shoppingListId, true);
+                        return await client.shoppingLists.getShoppingList(validShoppingListId);
                     } else {
                         // If no ID provided, get all shopping lists
                         return await client.shoppingLists.getAllShoppingLists();
@@ -130,8 +131,8 @@ module.exports = function(RED) {
                 throw new ValidationError('No list data provided for createList operation. Specify in node config or msg.payload.listData');
             }
             
-            // Parse the list data if it's a string
-            const parsedListData = typeof listData === 'string' ? JSON.parse(listData) : listData;
+            // Parse and validate the list data
+            const parsedListData = processInputData(listData, 'listData');
             
             return await executeWithClient(
                 node.config,
@@ -151,18 +152,19 @@ module.exports = function(RED) {
             if (!shoppingListId) {
                 throw new ValidationError('No shopping list ID provided for updateList operation. Specify in node config or msg.payload.shoppingListId');
             }
+            const validShoppingListId = validateId(shoppingListId, true);
             
             if (!listData) {
                 throw new ValidationError('No list data provided for updateList operation. Specify in node config or msg.payload.listData');
             }
             
-            // Parse the list data if it's a string
-            const parsedListData = typeof listData === 'string' ? JSON.parse(listData) : listData;
+            // Parse and validate the list data
+            const parsedListData = processInputData(listData, 'listData');
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.shoppingLists.updateShoppingList(shoppingListId, parsedListData);
+                    return await client.shoppingLists.updateShoppingList(validShoppingListId, parsedListData);
                 },
                 node,
                 msg
@@ -176,11 +178,12 @@ module.exports = function(RED) {
             if (!shoppingListId) {
                 throw new ValidationError('No shopping list ID provided for deleteList operation. Specify in node config or msg.payload.shoppingListId');
             }
+            const validShoppingListId = validateId(shoppingListId, true);
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.shoppingLists.deleteShoppingList(shoppingListId);
+                    return await client.shoppingLists.deleteShoppingList(validShoppingListId);
                 },
                 node,
                 msg
@@ -194,11 +197,12 @@ module.exports = function(RED) {
             if (!shoppingListId) {
                 throw new ValidationError('No shopping list ID provided for getItems operation. Specify in node config or msg.payload.shoppingListId');
             }
+            const validShoppingListId = validateId(shoppingListId, true);
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.shoppingLists.getShoppingListItems(shoppingListId);
+                    return await client.shoppingLists.getShoppingListItems(validShoppingListId);
                 },
                 node,
                 msg
@@ -213,18 +217,19 @@ module.exports = function(RED) {
             if (!shoppingListId) {
                 throw new ValidationError('No shopping list ID provided for createItem operation. Specify in node config or msg.payload.shoppingListId');
             }
+            const validShoppingListId = validateId(shoppingListId, true);
             
             if (!itemData) {
                 throw new ValidationError('No item data provided for createItem operation. Specify in node config or msg.payload.itemData');
             }
             
-            // Parse the item data if it's a string
-            const parsedItemData = typeof itemData === 'string' ? JSON.parse(itemData) : itemData;
+            // Parse and validate the item data
+            const parsedItemData = processInputData(itemData, 'itemData');
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.shoppingLists.createShoppingListItem(shoppingListId, parsedItemData);
+                    return await client.shoppingLists.createShoppingListItem(validShoppingListId, parsedItemData);
                 },
                 node,
                 msg
@@ -244,10 +249,13 @@ module.exports = function(RED) {
                 throw new ValidationError('No recipe ID provided for addRecipe operation. Specify in node config or msg.payload.recipeId');
             }
             
+            const validShoppingListId = validateId(shoppingListId, true);
+            const validRecipeId = validateId(recipeId, true);
+            
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.shoppingLists.addRecipeToShoppingList(shoppingListId, recipeId);
+                    return await client.shoppingLists.addRecipeToShoppingList(validShoppingListId, validRecipeId);
                 },
                 node,
                 msg

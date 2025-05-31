@@ -5,6 +5,7 @@
 
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
+const { validateOperation, validateId, processInputData } = require('../../lib/validation');
 
 module.exports = function(RED) {
     function MealiePlanningNode(config) {
@@ -31,14 +32,15 @@ module.exports = function(RED) {
                 // Determine operation (from config or payload)
                 const operation = msg.payload?.operation || node.operation;
                 
-                if (!operation) {
-                    throw new ValidationError('No operation specified. Set in node config or msg.payload.operation');
-                }
+                // Validate operation
+                const validOperation = validateOperation(operation, [
+                    'get', 'create', 'update', 'delete'
+                ]);
                 
                 // Execute the appropriate operation
                 let result;
                 
-                switch (operation) {
+                switch (validOperation) {
                     case 'get':
                         result = await handleGetOperation(node, msg);
                         break;
@@ -51,19 +53,17 @@ module.exports = function(RED) {
                     case 'delete':
                         result = await handleDeleteOperation(node, msg);
                         break;
-                    default:
-                        throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
                 
                 // Send successful result
                 msg.payload = {
                     success: true,
-                    operation: operation,
+                    operation: validOperation,
                     data: result
                 };
                 
                 // Set node status to show success
-                node.status({fill: "green", shape: "dot", text: operation + " success"});
+                node.status({fill: "green", shape: "dot", text: validOperation + " success"});
                 
                 // Use single output pattern
                 send(msg);
@@ -98,13 +98,14 @@ module.exports = function(RED) {
             const queryParams = msg.payload?.queryParams || node.queryParams;
             
             // Parse query params if it's a string
-            const parsedQueryParams = typeof queryParams === 'string' ? JSON.parse(queryParams) : queryParams || {};
+            const parsedQueryParams = queryParams ? processInputData(queryParams, 'queryParams') : {};
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
                     if (mealPlanId) {
-                        return await client.mealPlans.getMealPlan(mealPlanId);
+                        const validMealPlanId = validateId(mealPlanId, true);
+                        return await client.mealPlans.getMealPlan(validMealPlanId);
                     } else {
                         // If no ID provided, get all meal plans with optional query params
                         return await client.mealPlans.getAllMealPlans(parsedQueryParams);
@@ -123,8 +124,8 @@ module.exports = function(RED) {
                 throw new ValidationError('No plan data provided for create operation. Specify in node config or msg.payload.planData');
             }
             
-            // Parse the plan data if it's a string
-            const parsedPlanData = typeof planData === 'string' ? JSON.parse(planData) : planData;
+            // Parse and validate the plan data
+            const parsedPlanData = processInputData(planData, 'planData');
             
             return await executeWithClient(
                 node.config,
@@ -144,18 +145,19 @@ module.exports = function(RED) {
             if (!mealPlanId) {
                 throw new ValidationError('No meal plan ID provided for update operation. Specify in node config or msg.payload.mealPlanId');
             }
+            const validMealPlanId = validateId(mealPlanId, true);
             
             if (!planData) {
                 throw new ValidationError('No plan data provided for update operation. Specify in node config or msg.payload.planData');
             }
             
-            // Parse the plan data if it's a string
-            const parsedPlanData = typeof planData === 'string' ? JSON.parse(planData) : planData;
+            // Parse and validate the plan data
+            const parsedPlanData = processInputData(planData, 'planData');
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.mealPlans.updateMealPlan(mealPlanId, parsedPlanData);
+                    return await client.mealPlans.updateMealPlan(validMealPlanId, parsedPlanData);
                 },
                 node,
                 msg
@@ -169,11 +171,12 @@ module.exports = function(RED) {
             if (!mealPlanId) {
                 throw new ValidationError('No meal plan ID provided for delete operation. Specify in node config or msg.payload.mealPlanId');
             }
+            const validMealPlanId = validateId(mealPlanId, true);
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.mealPlans.deleteMealPlan(mealPlanId);
+                    return await client.mealPlans.deleteMealPlan(validMealPlanId);
                 },
                 node,
                 msg

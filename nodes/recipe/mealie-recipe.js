@@ -5,6 +5,7 @@
 
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
+const { validateOperation, validateSlug, validateId, processInputData } = require('../../lib/validation');
 
 module.exports = function(RED) {
     function MealieRecipeNode(config) {
@@ -30,14 +31,15 @@ module.exports = function(RED) {
                 // Determine operation (from config or payload)
                 const operation = msg.payload?.operation || node.operation;
                 
-                if (!operation) {
-                    throw new ValidationError('No operation specified. Set in node config or msg.payload.operation');
-                }
+                // Validate operation
+                const validOperation = validateOperation(operation, [
+                    'get', 'search', 'create', 'update', 'delete', 'image', 'asset'
+                ]);
                 
                 // Execute the appropriate operation
                 let result;
                 
-                switch (operation) {
+                switch (validOperation) {
                     case 'get':
                         result = await handleGetOperation(node, msg);
                         break;
@@ -59,14 +61,12 @@ module.exports = function(RED) {
                     case 'asset':
                         result = await handleAssetOperation(node, msg);
                         break;
-                    default:
-                        throw new ValidationError(`Unsupported operation: ${operation}`);
                 }
                 
                 // Send successful result
                 msg.payload = {
                     success: true,
-                    operation: operation,
+                    operation: validOperation,
                     data: result
                 };
                 
@@ -100,15 +100,12 @@ module.exports = function(RED) {
         // Helper for get operation
         async function handleGetOperation(node, msg) {
             const slug = msg.payload?.slug || node.slug;
-            
-            if (!slug) {
-                throw new ValidationError('No recipe slug provided for get operation. Specify in node config or msg.payload.slug');
-            }
+            const validSlug = validateSlug(slug, true, 'recipe slug for get operation');
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.recipes.getRecipe(slug);
+                    return await client.recipes.getRecipe(validSlug);
                 },
                 node,
                 msg
@@ -133,17 +130,13 @@ module.exports = function(RED) {
         async function handleCreateOperation(node, msg) {
             const recipeData = msg.payload?.recipeData || node.recipeData;
             
-            if (!recipeData) {
-                throw new ValidationError('No recipe data provided for create operation. Specify in node config or msg.payload.recipeData');
-            }
-            
-            // Parse the recipe data if it's a string
-            const parsedRecipeData = typeof recipeData === 'string' ? JSON.parse(recipeData) : recipeData;
+            // Validate and process recipe data (handles both JSON strings and objects)
+            const validRecipeData = processInputData(recipeData, 'recipe', 'create operation');
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.recipes.createRecipe(parsedRecipeData);
+                    return await client.recipes.createRecipe(validRecipeData);
                 },
                 node,
                 msg
@@ -155,21 +148,13 @@ module.exports = function(RED) {
             const slug = msg.payload?.slug || node.slug;
             const recipeData = msg.payload?.recipeData || node.recipeData;
             
-            if (!slug) {
-                throw new ValidationError('No recipe slug provided for update operation. Specify in node config or msg.payload.slug');
-            }
-            
-            if (!recipeData) {
-                throw new ValidationError('No recipe data provided for update operation. Specify in node config or msg.payload.recipeData');
-            }
-            
-            // Parse the recipe data if it's a string
-            const parsedRecipeData = typeof recipeData === 'string' ? JSON.parse(recipeData) : recipeData;
+            const validSlug = validateSlug(slug, true, 'recipe slug for update operation');
+            const validRecipeData = processInputData(recipeData, 'recipe', 'update operation');
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.recipes.updateRecipe(slug, parsedRecipeData);
+                    return await client.recipes.updateRecipe(validSlug, validRecipeData);
                 },
                 node,
                 msg
@@ -179,15 +164,12 @@ module.exports = function(RED) {
         // Helper for delete operation
         async function handleDeleteOperation(node, msg) {
             const slug = msg.payload?.slug || node.slug;
-            
-            if (!slug) {
-                throw new ValidationError('No recipe slug provided for delete operation. Specify in node config or msg.payload.slug');
-            }
+            const validSlug = validateSlug(slug, true, 'recipe slug for delete operation');
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    return await client.recipes.deleteRecipe(slug);
+                    return await client.recipes.deleteRecipe(validSlug);
                 },
                 node,
                 msg
@@ -200,23 +182,20 @@ module.exports = function(RED) {
             const imageAction = msg.payload?.imageAction || 'get';
             const imageData = msg.payload?.imageData;
             
-            if (!slug) {
-                throw new ValidationError('No recipe slug provided for image operation. Specify in node config or msg.payload.slug');
-            }
+            const validSlug = validateSlug(slug, true, 'recipe slug for image operation');
+            const validImageAction = validateOperation(imageAction, ['get', 'upload']);
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    switch (imageAction) {
+                    switch (validImageAction) {
                         case 'get':
-                            return await client.recipes.getRecipeImage(slug);
+                            return await client.recipes.getRecipeImage(validSlug);
                         case 'upload':
                             if (!imageData) {
                                 throw new ValidationError('No image data provided for image upload action');
                             }
-                            return await client.recipes.uploadRecipeImage(slug, imageData);
-                        default:
-                            throw new ValidationError(`Unsupported image action: ${imageAction}`);
+                            return await client.recipes.uploadRecipeImage(validSlug, imageData);
                     }
                 },
                 node,
@@ -231,33 +210,26 @@ module.exports = function(RED) {
             const assetAction = msg.payload?.assetAction || 'list';
             const assetData = msg.payload?.assetData;
             
-            if (!slug) {
-                throw new ValidationError('No recipe slug provided for asset operation. Specify in node config or msg.payload.slug');
-            }
+            const validSlug = validateSlug(slug, true, 'recipe slug for asset operation');
+            const validAssetAction = validateOperation(assetAction, ['list', 'get', 'upload', 'delete']);
             
             return await executeWithClient(
                 node.config,
                 async (client) => {
-                    switch (assetAction) {
+                    switch (validAssetAction) {
                         case 'list':
-                            return await client.recipes.getRecipeAssets(slug);
+                            return await client.recipes.getRecipeAssets(validSlug);
                         case 'get':
-                            if (!assetId) {
-                                throw new ValidationError('No asset ID provided for get asset action');
-                            }
-                            return await client.recipes.getRecipeAsset(slug, assetId);
+                            const validAssetId = validateId(assetId, true, 'asset ID for get asset action');
+                            return await client.recipes.getRecipeAsset(validSlug, validAssetId);
                         case 'upload':
                             if (!assetData) {
                                 throw new ValidationError('No asset data provided for upload asset action');
                             }
-                            return await client.recipes.uploadRecipeAsset(slug, assetData);
+                            return await client.recipes.uploadRecipeAsset(validSlug, assetData);
                         case 'delete':
-                            if (!assetId) {
-                                throw new ValidationError('No asset ID provided for delete asset action');
-                            }
-                            return await client.recipes.deleteRecipeAsset(slug, assetId);
-                        default:
-                            throw new ValidationError(`Unsupported asset action: ${assetAction}`);
+                            const validDeleteAssetId = validateId(assetId, true, 'asset ID for delete asset action');
+                            return await client.recipes.deleteRecipeAsset(validSlug, validDeleteAssetId);
                     }
                 },
                 node,
