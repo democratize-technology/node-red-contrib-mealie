@@ -6,7 +6,7 @@
 const { executeWithClient } = require('../../lib/client-wrapper');
 const { ValidationError } = require('../../lib/errors');
 const { validateOperation, validateId, processInputData } = require('../../lib/validation');
-const { setSuccessStatus, setErrorStatus } = require('../../lib/node-status');
+const { setSuccessStatus, setErrorStatus, clearStatusTimer } = require('../../lib/node-status');
 
 module.exports = function(RED) {
     function MealieShoppingNode(config) {
@@ -24,6 +24,7 @@ module.exports = function(RED) {
         this.config = RED.nodes.getNode(this.server);
         
         const node = this;
+        let statusTimer;
         
         // Handle input message
         node.on('input', async function(msg, send, done) {
@@ -44,27 +45,27 @@ module.exports = function(RED) {
                 let result;
                 
                 switch (validOperation) {
-                    case 'getList':
-                        result = await handleGetListOperation(node, msg);
-                        break;
-                    case 'createList':
-                        result = await handleCreateListOperation(node, msg);
-                        break;
-                    case 'updateList':
-                        result = await handleUpdateListOperation(node, msg);
-                        break;
-                    case 'deleteList':
-                        result = await handleDeleteListOperation(node, msg);
-                        break;
-                    case 'getItems':
-                        result = await handleGetItemsOperation(node, msg);
-                        break;
-                    case 'createItem':
-                        result = await handleCreateItemOperation(node, msg);
-                        break;
-                    case 'addRecipe':
-                        result = await handleAddRecipeOperation(node, msg);
-                        break;
+                case 'getList':
+                    result = await handleGetListOperation(node, msg);
+                    break;
+                case 'createList':
+                    result = await handleCreateListOperation(node, msg);
+                    break;
+                case 'updateList':
+                    result = await handleUpdateListOperation(node, msg);
+                    break;
+                case 'deleteList':
+                    result = await handleDeleteListOperation(node, msg);
+                    break;
+                case 'getItems':
+                    result = await handleGetItemsOperation(node, msg);
+                    break;
+                case 'createItem':
+                    result = await handleCreateItemOperation(node, msg);
+                    break;
+                case 'addRecipe':
+                    result = await handleAddRecipeOperation(node, msg);
+                    break;
                 }
                 
                 // Send successful result
@@ -75,7 +76,8 @@ module.exports = function(RED) {
                 };
                 
                 // Set node status to show success
-                setSuccessStatus(node, validOperation);
+                clearStatusTimer(statusTimer);
+                statusTimer = setSuccessStatus(node, validOperation);
                 
                 // Use single output pattern
                 send(msg);
@@ -93,7 +95,8 @@ module.exports = function(RED) {
                 };
                 
                 // Set node status to show error
-                setErrorStatus(node, error.message);
+                clearStatusTimer(statusTimer);
+                statusTimer = setErrorStatus(node, error.message);
                 
                 // Log error to runtime
                 node.error(error.message, msg);
@@ -262,6 +265,11 @@ module.exports = function(RED) {
                 msg
             );
         }
+        
+        // Clean up timer on node close
+        node.on('close', function() {
+            clearStatusTimer(statusTimer);
+        });
     }
     
     RED.nodes.registerType('mealie-shopping', MealieShoppingNode);
