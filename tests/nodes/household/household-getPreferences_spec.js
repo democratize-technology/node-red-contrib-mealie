@@ -82,18 +82,16 @@ describe('mealie-household Node with getPreferences operation', function () {
         ];
 
         // Set up mock for household operation
-        mockClient.household = {
-            getHouseholdPreferences: sinon.stub().resolves({
-                id: 'pref-123',
-                householdId: 'household-123',
-                notificationTime: '08:00',
-                recipeLandingType: 'all',
-                recipeCardType: 'wide',
-                recipeShowNutrition: true,
-                recipeShowAssets: true,
-                enableNotifications: true
-            })
-        };
+        mockClient.households.getHouseholdPreferences = sinon.stub().resolves({
+            id: 'pref-123',
+            householdId: 'household-123',
+            notificationTime: '08:00',
+            recipeLandingType: 'all',
+            recipeCardType: 'wide',
+            recipeShowNutrition: true,
+            recipeShowAssets: true,
+            enableNotifications: true
+        });
 
         helper.load([rewiredHouseholdNode, configNode], flow, function () {
             const n1 = helper.getNode('n1');
@@ -110,8 +108,8 @@ describe('mealie-household Node with getPreferences operation', function () {
                     msg.payload.data.should.have.property('notificationTime', '08:00');
 
                     // Verify the stub was called with the right argument
-                    sinon.assert.calledOnce(mockClient.household.getHouseholdPreferences);
-                    sinon.assert.calledWith(mockClient.household.getHouseholdPreferences, 'household-123');
+                    sinon.assert.calledOnce(mockClient.households.getHouseholdPreferences);
+                    sinon.assert.calledWith(mockClient.households.getHouseholdPreferences, 'household-123');
 
                     done();
                 } catch (err) {
@@ -143,7 +141,7 @@ describe('mealie-household Node with getPreferences operation', function () {
         ];
 
         // Reset stub
-        mockClient.household.getHouseholdPreferences = sinon.stub().resolves({
+        mockClient.households.getHouseholdPreferences = sinon.stub().resolves({
             id: 'pref-456',
             householdId: 'household-456',
             notificationTime: '09:00',
@@ -169,8 +167,8 @@ describe('mealie-household Node with getPreferences operation', function () {
                     msg.payload.data.should.have.property('notificationTime', '09:00');
 
                     // Verify the stub was called with the right argument
-                    sinon.assert.calledOnce(mockClient.household.getHouseholdPreferences);
-                    sinon.assert.calledWith(mockClient.household.getHouseholdPreferences, 'household-456');
+                    sinon.assert.calledOnce(mockClient.households.getHouseholdPreferences);
+                    sinon.assert.calledWith(mockClient.households.getHouseholdPreferences, 'household-456');
 
                     done();
                 } catch (err) {
@@ -247,7 +245,7 @@ describe('mealie-household Node with getPreferences operation', function () {
         ];
 
         // Make the getHouseholdPreferences stub throw an error
-        mockClient.household.getHouseholdPreferences = sinon.stub().rejects(new Error('Cannot retrieve preferences'));
+        mockClient.households.getHouseholdPreferences = sinon.stub().rejects(new Error('Cannot retrieve preferences'));
 
         helper.load([rewiredHouseholdNode, configNode], flow, function () {
             const n1 = helper.getNode('n1');

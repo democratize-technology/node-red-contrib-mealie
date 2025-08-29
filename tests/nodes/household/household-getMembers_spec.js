@@ -82,12 +82,10 @@ describe('mealie-household Node with getMembers operation', function () {
         ];
 
         // Set up mock for household operation
-        mockClient.household = {
-            getHouseholdMembers: sinon.stub().resolves([
-                { id: 'user-123', name: 'John Doe', email: 'john@example.com' },
-                { id: 'user-456', name: 'Jane Smith', email: 'jane@example.com' }
-            ])
-        };
+        mockClient.households.getHouseholdMembers = sinon.stub().resolves([
+            { id: 'user-123', name: 'John Doe', email: 'john@example.com' },
+            { id: 'user-456', name: 'Jane Smith', email: 'jane@example.com' }
+        ]);
 
         helper.load([rewiredHouseholdNode, configNode], flow, function () {
             const n1 = helper.getNode('n1');
@@ -105,8 +103,8 @@ describe('mealie-household Node with getMembers operation', function () {
                     msg.payload.data[1].should.have.property('name', 'Jane Smith');
 
                     // Verify the stub was called with the right argument
-                    sinon.assert.calledOnce(mockClient.household.getHouseholdMembers);
-                    sinon.assert.calledWith(mockClient.household.getHouseholdMembers, 'household-123');
+                    sinon.assert.calledOnce(mockClient.households.getHouseholdMembers);
+                    sinon.assert.calledWith(mockClient.households.getHouseholdMembers, 'household-123');
 
                     done();
                 } catch (err) {
@@ -138,7 +136,7 @@ describe('mealie-household Node with getMembers operation', function () {
         ];
 
         // Reset stub
-        mockClient.household.getHouseholdMembers = sinon.stub().resolves([
+        mockClient.households.getHouseholdMembers = sinon.stub().resolves([
             { id: 'user-789', name: 'Bob Johnson', email: 'bob@example.com' }
         ]);
 
@@ -157,8 +155,8 @@ describe('mealie-household Node with getMembers operation', function () {
                     msg.payload.data[0].should.have.property('name', 'Bob Johnson');
 
                     // Verify the stub was called with the right argument
-                    sinon.assert.calledOnce(mockClient.household.getHouseholdMembers);
-                    sinon.assert.calledWith(mockClient.household.getHouseholdMembers, 'household-456');
+                    sinon.assert.calledOnce(mockClient.households.getHouseholdMembers);
+                    sinon.assert.calledWith(mockClient.households.getHouseholdMembers, 'household-456');
 
                     done();
                 } catch (err) {
@@ -235,7 +233,7 @@ describe('mealie-household Node with getMembers operation', function () {
         ];
 
         // Make the getHouseholdMembers stub throw an error
-        mockClient.household.getHouseholdMembers = sinon.stub().rejects(new Error('Cannot retrieve members'));
+        mockClient.households.getHouseholdMembers = sinon.stub().rejects(new Error('Cannot retrieve members'));
 
         helper.load([rewiredHouseholdNode, configNode], flow, function () {
             const n1 = helper.getNode('n1');

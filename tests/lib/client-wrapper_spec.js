@@ -95,6 +95,7 @@ describe('Client Wrapper', function() {
     describe('Cleanup Functions', function() {
         it('should clean up stale clients with cleanupStaleClients function', function() {
             const { __testHelpers } = require('../../lib/client-wrapper');
+            const lruCache = __testHelpers.getLRUCache();
 
             // Create multiple clients with different timestamps
             const config1 = { id: 'config1', getMealieClient: sinon.stub().resolves(mockClient) };
@@ -102,25 +103,31 @@ describe('Client Wrapper', function() {
 
             // Add clients to cache with different ages
             const now = Date.now();
-            clientWrapper._clientCache.set(config1.id, {
+            lruCache.cache.set(config1.id, {
                 client: mockClient,
-                lastUsed: now - (16 * 60 * 1000) // 16 minutes ago (stale)
+                createdAt: now - (16 * 60 * 1000), // 16 minutes ago (stale)
+                lastUsed: now - (16 * 60 * 1000)
             });
-            clientWrapper._clientCache.set(config2.id, {
+            lruCache.cache.set(config2.id, {
                 client: mockClient,
-                lastUsed: now - (5 * 60 * 1000) // 5 minutes ago (fresh)
+                createdAt: now - (5 * 60 * 1000), // 5 minutes ago (fresh)
+                lastUsed: now - (5 * 60 * 1000)
             });
 
+            // Update access order
+            lruCache.accessOrder.set(config1.id, now - (16 * 60 * 1000));
+            lruCache.accessOrder.set(config2.id, now - (5 * 60 * 1000));
+
             // Verify both are in cache initially
-            clientWrapper._clientCache.has(config1.id).should.be.true();
-            clientWrapper._clientCache.has(config2.id).should.be.true();
+            lruCache.cache.has(config1.id).should.be.true();
+            lruCache.cache.has(config2.id).should.be.true();
 
             // Call the actual cleanup function
             __testHelpers.cleanupStaleClients();
 
             // Verify stale client removed, fresh client remains
-            clientWrapper._clientCache.has(config1.id).should.be.false();
-            clientWrapper._clientCache.has(config2.id).should.be.true();
+            lruCache.cache.has(config1.id).should.be.false();
+            lruCache.cache.has(config2.id).should.be.true();
         });
 
         it('should properly cleanup interval and cache with cleanup function', function() {

@@ -94,18 +94,16 @@ describe('mealie-household Node with updatePreferences operation', function () {
         ];
 
         // Set up mock for household operation
-        mockClient.household = {
-            updateHouseholdPreferences: sinon.stub().resolves({
-                id: 'pref-123',
-                householdId: householdId,
-                notificationTime: '09:00',
-                recipeLandingType: 'recent',
-                recipeCardType: 'compact',
-                recipeShowNutrition: false,
-                recipeShowAssets: true,
-                enableNotifications: true
-            })
-        };
+        mockClient.households.updateHouseholdPreferences = sinon.stub().resolves({
+            id: 'pref-123',
+            householdId: householdId,
+            notificationTime: '09:00',
+            recipeLandingType: 'recent',
+            recipeCardType: 'compact',
+            recipeShowNutrition: false,
+            recipeShowAssets: true,
+            enableNotifications: true
+        });
 
         helper.load([rewiredHouseholdNode, configNode], flow, function () {
             const n1 = helper.getNode('n1');
@@ -124,8 +122,8 @@ describe('mealie-household Node with updatePreferences operation', function () {
                     msg.payload.data.should.have.property('recipeCardType', 'compact');
 
                     // Verify the stub was called with the right arguments
-                    sinon.assert.calledOnce(mockClient.household.updateHouseholdPreferences);
-                    sinon.assert.calledWith(mockClient.household.updateHouseholdPreferences, householdId, preferencesData);
+                    sinon.assert.calledOnce(mockClient.households.updateHouseholdPreferences);
+                    sinon.assert.calledWith(mockClient.households.updateHouseholdPreferences, householdId, preferencesData);
 
                     done();
                 } catch (err) {
@@ -168,7 +166,7 @@ describe('mealie-household Node with updatePreferences operation', function () {
         };
 
         // Reset stub for mock
-        mockClient.household.updateHouseholdPreferences = sinon.stub().resolves({
+        mockClient.households.updateHouseholdPreferences = sinon.stub().resolves({
             id: 'pref-456',
             householdId: householdId,
             notificationTime: '10:00',
@@ -196,8 +194,8 @@ describe('mealie-household Node with updatePreferences operation', function () {
                     msg.payload.data.should.have.property('recipeCardType', 'wide');
 
                     // Verify the stub was called with the right arguments
-                    sinon.assert.calledOnce(mockClient.household.updateHouseholdPreferences);
-                    sinon.assert.calledWith(mockClient.household.updateHouseholdPreferences, householdId, preferencesData);
+                    sinon.assert.calledOnce(mockClient.households.updateHouseholdPreferences);
+                    sinon.assert.calledWith(mockClient.households.updateHouseholdPreferences, householdId, preferencesData);
 
                     done();
                 } catch (err) {
@@ -243,7 +241,7 @@ describe('mealie-household Node with updatePreferences operation', function () {
         ];
 
         // Reset stub for mock
-        mockClient.household.updateHouseholdPreferences = sinon.stub().resolves({
+        mockClient.households.updateHouseholdPreferences = sinon.stub().resolves({
             id: 'pref-123',
             householdId: householdId,
             notificationTime: '11:00',
@@ -265,8 +263,8 @@ describe('mealie-household Node with updatePreferences operation', function () {
                     msg.payload.data.should.have.property('notificationTime', '11:00');
 
                     // Verify the stub was called with the right arguments
-                    sinon.assert.calledOnce(mockClient.household.updateHouseholdPreferences);
-                    sinon.assert.calledWith(mockClient.household.updateHouseholdPreferences, householdId, preferencesData);
+                    sinon.assert.calledOnce(mockClient.households.updateHouseholdPreferences);
+                    sinon.assert.calledWith(mockClient.households.updateHouseholdPreferences, householdId, preferencesData);
 
                     done();
                 } catch (err) {
@@ -407,7 +405,7 @@ describe('mealie-household Node with updatePreferences operation', function () {
         ];
 
         // Make the updateHouseholdPreferences stub throw an error
-        mockClient.household.updateHouseholdPreferences = sinon.stub().rejects(new Error('Cannot update preferences: Household not found'));
+        mockClient.households.updateHouseholdPreferences = sinon.stub().rejects(new Error('Cannot update preferences: Household not found'));
 
         helper.load([rewiredHouseholdNode, configNode], flow, function () {
             const n1 = helper.getNode('n1');
