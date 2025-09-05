@@ -62,6 +62,7 @@ async function testTimerManagement() {
     
     // Create multiple nodes
     for (let i = 0; i < nodeCount; i++) {
+        // PERFORMANCE-CRITICAL: Using .push() in test loop to avoid spread operation overhead
         nodes.push(new MockNode(`node_${i}`));
     }
     
@@ -124,6 +125,7 @@ async function testClientCache() {
     const configs = [];
     
     for (let i = 0; i < configCount; i++) {
+        // PERFORMANCE-CRITICAL: Using .push() in test loop to avoid spread operation overhead
         configs.push({
             id: `config_${i}`,
             getMealieClient: async () => ({
@@ -183,6 +185,7 @@ async function testNodeLifecycle() {
         const nodes = [];
         for (let i = 0; i < nodesPerCycle; i++) {
             const node = new MockNode(`cycle_${cycle}_node_${i}`);
+            // PERFORMANCE-CRITICAL: Using .push() in test loop to avoid spread operation overhead
             nodes.push(node);
             
             // Simulate some activity
@@ -253,6 +256,7 @@ async function stressTest() {
         
         // Take memory snapshot
         const currentMemory = process.memoryUsage().heapUsed;
+        // PERFORMANCE-CRITICAL: Using .push() in test loop to avoid spread operation overhead
         memorySnapshots.push(currentMemory);
         console.log(`Heap after iteration ${i + 1}: ${formatBytes(currentMemory)}`);
         

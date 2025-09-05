@@ -41,22 +41,26 @@ module.exports = function (RED) {
                 } = mealieModule;
 
                 // Create client with token included in constructor options
-                const client = new MealieClient({
+                const baseClient = new MealieClient({
                     baseUrl: this.url,
                     timeout: this.timeout,
                     token: this.apiToken, // Pass token directly in constructor
                 });
 
-                // Initialize services and attach them to client
-                client.recipes = new RecipeService(client);
-                client.households = new HouseholdsService(client);
-                client.about = new AboutService(client);
-                client.groups = new GroupsService(client);
-                client.organizers = new OrganizerService(client);
-                client.users = new UserService(client);
-                client.media = new MediaService(client);
-                client.admin = new AdminService(client);
-                return client;
+                // Initialize services and create client with all services (immutable pattern)
+                const clientWithServices = Object.assign(Object.create(Object.getPrototypeOf(baseClient)), {
+                    ...baseClient,
+                    recipes: new RecipeService(baseClient),
+                    households: new HouseholdsService(baseClient),
+                    about: new AboutService(baseClient),
+                    groups: new GroupsService(baseClient),
+                    organizers: new OrganizerService(baseClient),
+                    users: new UserService(baseClient),
+                    media: new MediaService(baseClient),
+                    admin: new AdminService(baseClient)
+                });
+
+                return clientWithServices;
             } catch (error) {
                 throw new Error(`Failed to connect to Mealie: ${error.message}`);
             }
