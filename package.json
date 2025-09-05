@@ -37,7 +37,9 @@
   },
   "dependencies": {
     "cockatiel": "^3.2.1",
-    "node-mealie": "^0.1.1"
+    "mnemonist": "^0.40.3",
+    "node-mealie": "^0.1.1",
+    "zod": "^4.1.5"
   },
   "devDependencies": {
     "chai": "^4.3.10",
