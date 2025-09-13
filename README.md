@@ -63,7 +63,12 @@ The domain nodes use an operation-based pattern where:
 2. The UI dynamically adapts to show relevant fields for the selected operation
 3. Operations can be overridden at runtime by setting `msg.payload.operation`
 
-### Example Usage
+**Example Flow**: See the `examples` directory for example flows. Specifically:
+- `admin-operations.json`
+- `household-shopping.json`
+- `mealplan-organizer.json`
+- `parser-utility.json`
+- `recipe-operations.json`
 
 Static configuration:
 ```
